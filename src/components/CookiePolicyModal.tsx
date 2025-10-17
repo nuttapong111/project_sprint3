@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { XMarkIcon, CookieIcon, ShieldCheckIcon, CogIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ShieldCheckIcon, CogIcon } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface CookiePolicyModalProps {
@@ -99,7 +99,7 @@ export default function CookiePolicyModal({ isOpen, onClose }: CookiePolicyModal
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                      <CookieIcon className="h-6 w-6 text-primary-600" />
+                      <span className="text-2xl">🍪</span>
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">นโยบายคุกกี้</h3>

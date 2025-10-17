@@ -57,11 +57,19 @@ export default function LoginPage() {
           loginMethod === 'email' ? formData.email : formData.phone,
           formData.password
         );
-        if (user) {
-          console.log('Login successful:', user);
-          // Redirect to dashboard or home page
-          router.push('/');
-        } else {
+               if (user) {
+                 console.log('Login successful:', user);
+                 // Redirect to appropriate dashboard based on user type
+                 if (user.userType === 'citizen') {
+                   router.push('/citizen/dashboard');
+                 } else if (user.userType === 'officer') {
+                   router.push('/officer/dashboard');
+                 } else if (user.userType === 'admin') {
+                   router.push('/admin/dashboard');
+                 } else {
+                   router.push('/');
+                 }
+               } else {
           setError('อีเมล/เบอร์โทรศัพท์หรือรหัสผ่านไม่ถูกต้อง');
         }
       }

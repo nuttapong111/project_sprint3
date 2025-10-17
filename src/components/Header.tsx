@@ -9,11 +9,23 @@ import {
   SpeakerXMarkIcon,
   AdjustmentsHorizontalIcon,
   EyeIcon,
-  CursorArrowRaysIcon
+  CursorArrowRaysIcon,
+  HomeIcon,
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
+  ClipboardDocumentListIcon,
+  HeartIcon,
+  BellIcon,
+  CogIcon
 } from '@heroicons/react/24/outline';
 import NotificationPopup from './NotificationPopup';
 
-export default function Header() {
+interface HeaderProps {
+  isLoggedIn?: boolean;
+  userType?: 'citizen' | 'officer' | 'admin';
+}
+
+export default function Header({ isLoggedIn = false, userType = 'citizen' }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isTextToSpeech, setIsTextToSpeech] = useState(false);
   const [isHighContrast, setIsHighContrast] = useState(false);
@@ -26,6 +38,46 @@ export default function Header() {
     { name: 'เกี่ยวกับเรา', href: '#about' },
     { name: 'ติดต่อ', href: '#contact' },
   ];
+
+  const citizenMenu = [
+    { name: 'Dashboard', href: '/citizen/dashboard', icon: HomeIcon },
+    { name: 'กระเป๋าเอกสารดิจิทัล', href: '/citizen/digital-wallet', icon: DocumentTextIcon },
+    { name: 'แจ้งความออนไลน์', href: '/citizen/report-crime', icon: ExclamationTriangleIcon },
+    { name: 'ยื่นเอกสารออนไลน์', href: '/citizen/submit-documents', icon: ClipboardDocumentListIcon },
+    { name: 'พบแพทย์', href: '/citizen/medical-appointment', icon: HeartIcon },
+    { name: 'การแจ้งเตือน', href: '/citizen/notifications', icon: BellIcon },
+    { name: 'ตั้งค่าโปรไฟล์', href: '/citizen/profile', icon: CogIcon },
+  ];
+
+  const officerMenu = [
+    { name: 'Dashboard', href: '/officer/dashboard', icon: HomeIcon },
+    { name: 'จัดการคำขอ', href: '/officer/requests', icon: ClipboardDocumentListIcon },
+    { name: 'ตรวจสอบเอกสาร', href: '/officer/documents', icon: DocumentTextIcon },
+    { name: 'รายงาน', href: '/officer/reports', icon: ExclamationTriangleIcon },
+    { name: 'การแจ้งเตือน', href: '/officer/notifications', icon: BellIcon },
+    { name: 'ตั้งค่าโปรไฟล์', href: '/officer/profile', icon: CogIcon },
+  ];
+
+  const adminMenu = [
+    { name: 'Dashboard', href: '/admin/dashboard', icon: HomeIcon },
+    { name: 'จัดการผู้ใช้', href: '/admin/users', icon: UserIcon },
+    { name: 'จัดการระบบ', href: '/admin/system', icon: CogIcon },
+    { name: 'รายงาน', href: '/admin/reports', icon: ExclamationTriangleIcon },
+    { name: 'การแจ้งเตือน', href: '/admin/notifications', icon: BellIcon },
+    { name: 'ตั้งค่าโปรไฟล์', href: '/admin/profile', icon: CogIcon },
+  ];
+
+  const getCurrentMenu = () => {
+    if (!isLoggedIn) return [];
+    switch (userType) {
+      case 'citizen': return citizenMenu;
+      case 'officer': return officerMenu;
+      case 'admin': return adminMenu;
+      default: return citizenMenu;
+    }
+  };
+
+  const currentMenu = getCurrentMenu();
 
   const handleNavClick = (href: string) => {
     if (href.startsWith('#')) {
@@ -118,19 +170,40 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8" role="navigation" aria-label="เมนูหลัก">
-            {navigation.map((item) => (
-              <button
-                key={item.name}
-                onClick={() => handleNavClick(item.href)}
-                className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors duration-200"
-                aria-label={`ไปยัง${item.name}`}
-              >
-                {item.name}
-              </button>
-            ))}
-          </nav>
+          {/* Desktop Navigation - Conditional Rendering */}
+          {!isLoggedIn ? (
+            /* Homepage Navigation */
+            <nav className="hidden md:flex space-x-8" role="navigation" aria-label="เมนูหลัก">
+              {navigation.map((item) => (
+                <button
+                  key={item.name}
+                  onClick={() => handleNavClick(item.href)}
+                  className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors duration-200"
+                  aria-label={`ไปยัง${item.name}`}
+                >
+                  {item.name}
+                </button>
+              ))}
+            </nav>
+          ) : (
+            /* Logged-in User Menu */
+            <nav className="hidden lg:flex space-x-1" role="navigation" aria-label={`เมนู${userType === 'citizen' ? 'ประชาชน' : userType === 'officer' ? 'เจ้าหน้าที่' : 'ผู้ดูแลระบบ'}`}>
+              {currentMenu.map((item) => {
+                const IconComponent = item.icon;
+                return (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors duration-200 rounded-lg hover:bg-primary-50"
+                    aria-label={`ไปยัง${item.name}`}
+                  >
+                    <IconComponent className="h-4 w-4" />
+                    <span className="hidden xl:block">{item.name}</span>
+                  </a>
+                );
+              })}
+            </nav>
+          )}
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-2">
@@ -192,10 +265,21 @@ export default function Header() {
             <div className="relative">
               <NotificationPopup />
             </div>
-            <a href="/login" className="btn-primary">
-              <UserIcon className="h-5 w-5 mr-2" />
-              เข้าสู่ระบบ
-            </a>
+            {!isLoggedIn ? (
+              <a href="/login" className="btn-primary">
+                <UserIcon className="h-5 w-5 mr-2" />
+                เข้าสู่ระบบ
+              </a>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <span className="text-sm text-gray-700">
+                  {userType === 'citizen' ? 'ประชาชน' : userType === 'officer' ? 'เจ้าหน้าที่' : 'ผู้ดูแลระบบ'}
+                </span>
+                <a href="/logout" className="text-gray-600 hover:text-gray-900 text-sm">
+                  ออกจากระบบ
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -217,24 +301,62 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50 rounded-lg mt-2">
-              {navigation.map((item) => (
-                <button
-                  key={item.name}
-                  onClick={() => {
-                    handleNavClick(item.href);
-                    setIsMenuOpen(false);
-                  }}
-                  className="text-gray-700 hover:text-primary-600 block px-3 py-2 text-base font-medium w-full text-left"
-                >
-                  {item.name}
-                </button>
-              ))}
-              <div className="pt-4 border-t border-gray-200">
-                <button className="w-full btn-primary">
-                  <UserIcon className="h-5 w-5 mr-2" />
-                  เข้าสู่ระบบ
-                </button>
-              </div>
+              {!isLoggedIn ? (
+                /* Homepage Mobile Navigation */
+                <>
+                  {navigation.map((item) => (
+                    <button
+                      key={item.name}
+                      onClick={() => {
+                        handleNavClick(item.href);
+                        setIsMenuOpen(false);
+                      }}
+                      className="text-gray-700 hover:text-primary-600 block px-3 py-2 text-base font-medium w-full text-left"
+                    >
+                      {item.name}
+                    </button>
+                  ))}
+                  <div className="pt-4 border-t border-gray-200">
+                    <a href="/login" className="w-full btn-primary">
+                      <UserIcon className="h-5 w-5 mr-2" />
+                      เข้าสู่ระบบ
+                    </a>
+                  </div>
+                </>
+              ) : (
+                /* Logged-in Mobile Navigation */
+                <>
+                  <div className="pt-4 border-t border-gray-200">
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      เมนู{userType === 'citizen' ? 'ประชาชน' : userType === 'officer' ? 'เจ้าหน้าที่' : 'ผู้ดูแลระบบ'}
+                    </h3>
+                    {currentMenu.map((item) => {
+                      const IconComponent = item.icon;
+                      return (
+                        <a
+                          key={item.name}
+                          href={item.href}
+                          className="flex items-center space-x-3 text-gray-700 hover:text-primary-600 block px-3 py-2 text-base font-medium w-full text-left"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <IconComponent className="h-5 w-5" />
+                          <span>{item.name}</span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                  <div className="pt-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <span className="text-sm text-gray-700">
+                        {userType === 'citizen' ? 'ประชาชน' : userType === 'officer' ? 'เจ้าหน้าที่' : 'ผู้ดูแลระบบ'}
+                      </span>
+                      <a href="/logout" className="text-gray-600 hover:text-gray-900 text-sm">
+                        ออกจากระบบ
+                      </a>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

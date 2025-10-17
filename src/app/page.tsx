@@ -14,7 +14,7 @@ export default function HomePage() {
         ข้ามไปยังเนื้อหาหลัก
       </a>
       
-      <Header />
+      <Header isLoggedIn={false} />
       
       <main id="main-content">
         <HeroSection />
