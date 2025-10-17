@@ -16,7 +16,8 @@ import {
   ClipboardDocumentListIcon,
   HeartIcon,
   BellIcon,
-  CogIcon
+  CogIcon,
+  ChevronDownIcon
 } from '@heroicons/react/24/outline';
 import NotificationPopup from './NotificationPopup';
 
@@ -27,6 +28,7 @@ interface HeaderProps {
 
 export default function Header({ isLoggedIn = false, userType = 'citizen' }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isTextToSpeech, setIsTextToSpeech] = useState(false);
   const [isHighContrast, setIsHighContrast] = useState(false);
   const [isLargeText, setIsLargeText] = useState(false);
@@ -45,8 +47,6 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
     { name: 'แจ้งความออนไลน์', href: '/citizen/report-crime', icon: ExclamationTriangleIcon },
     { name: 'ยื่นเอกสารออนไลน์', href: '/citizen/submit-documents', icon: ClipboardDocumentListIcon },
     { name: 'พบแพทย์', href: '/citizen/medical-appointment', icon: HeartIcon },
-    { name: 'การแจ้งเตือน', href: '/citizen/notifications', icon: BellIcon },
-    { name: 'ตั้งค่าโปรไฟล์', href: '/citizen/profile', icon: CogIcon },
   ];
 
   const officerMenu = [
@@ -54,8 +54,6 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
     { name: 'จัดการคำขอ', href: '/officer/requests', icon: ClipboardDocumentListIcon },
     { name: 'ตรวจสอบเอกสาร', href: '/officer/documents', icon: DocumentTextIcon },
     { name: 'รายงาน', href: '/officer/reports', icon: ExclamationTriangleIcon },
-    { name: 'การแจ้งเตือน', href: '/officer/notifications', icon: BellIcon },
-    { name: 'ตั้งค่าโปรไฟล์', href: '/officer/profile', icon: CogIcon },
   ];
 
   const adminMenu = [
@@ -63,8 +61,6 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
     { name: 'จัดการผู้ใช้', href: '/admin/users', icon: UserIcon },
     { name: 'จัดการระบบ', href: '/admin/system', icon: CogIcon },
     { name: 'รายงาน', href: '/admin/reports', icon: ExclamationTriangleIcon },
-    { name: 'การแจ้งเตือน', href: '/admin/notifications', icon: BellIcon },
-    { name: 'ตั้งค่าโปรไฟล์', href: '/admin/profile', icon: CogIcon },
   ];
 
   const getCurrentMenu = () => {
@@ -78,6 +74,22 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
   };
 
   const currentMenu = getCurrentMenu();
+
+  // Mock user data
+  const getUserData = () => {
+    switch (userType) {
+      case 'citizen':
+        return { name: 'สมชาย ใจดี', role: 'ประชาชน' };
+      case 'officer':
+        return { name: 'นางสาว รัฐบาล', role: 'เจ้าหน้าที่' };
+      case 'admin':
+        return { name: 'ดร. ระบบดิจิทัล', role: 'ผู้ดูแลระบบ' };
+      default:
+        return { name: 'ผู้ใช้', role: 'ประชาชน' };
+    }
+  };
+
+  const userData = getUserData();
 
   const handleNavClick = (href: string) => {
     if (href.startsWith('#')) {
@@ -141,6 +153,23 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
     }
   }, [isVoiceControl]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isUserDropdownOpen) {
+        const target = event.target as Element;
+        if (!target.closest('[data-dropdown]')) {
+          setIsUserDropdownOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isUserDropdownOpen]);
+
   const handleVoiceCommand = (command: string) => {
     if (command.includes('หน้าหลัก') || command.includes('home')) {
       document.querySelector('#home')?.scrollIntoView({ behavior: 'smooth' });
@@ -155,7 +184,7 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
 
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50" role="banner">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
@@ -262,22 +291,62 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
               </button>
             </div>
 
-            <div className="relative">
-              <NotificationPopup />
-            </div>
             {!isLoggedIn ? (
               <a href="/login" className="btn-primary">
                 <UserIcon className="h-5 w-5 mr-2" />
                 เข้าสู่ระบบ
               </a>
             ) : (
-              <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-700">
-                  {userType === 'citizen' ? 'ประชาชน' : userType === 'officer' ? 'เจ้าหน้าที่' : 'ผู้ดูแลระบบ'}
-                </span>
-                <a href="/logout" className="text-gray-600 hover:text-gray-900 text-sm">
-                  ออกจากระบบ
-                </a>
+              <div className="flex items-center space-x-4">
+                {/* Notifications */}
+                <div className="relative">
+                  <NotificationPopup />
+                </div>
+
+                {/* User Dropdown */}
+                <div className="relative" data-dropdown>
+                  <button
+                    onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                    className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <div className="text-right">
+                      <div className="text-sm font-medium">{userData.name}</div>
+                      <div className="text-xs text-gray-500">{userData.role}</div>
+                    </div>
+                    <ChevronDownIcon className="h-4 w-4" />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isUserDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                      <a
+                        href={`/${userType}/profile`}
+                        className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                      >
+                        <UserIcon className="h-4 w-4" />
+                        <span>โปรไฟล์ส่วนตัว</span>
+                      </a>
+                      <a
+                        href={`/${userType}/notifications`}
+                        className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                      >
+                        <BellIcon className="h-4 w-4" />
+                        <span>การแจ้งเตือน</span>
+                      </a>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <a
+                        href="/logout"
+                        className="flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                      >
+                        <XMarkIcon className="h-4 w-4" />
+                        <span>ออกจากระบบ</span>
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -346,12 +415,30 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
                     })}
                   </div>
                   <div className="pt-4 border-t border-gray-200">
-                    <div className="flex items-center justify-between px-3 py-2">
-                      <span className="text-sm text-gray-700">
-                        {userType === 'citizen' ? 'ประชาชน' : userType === 'officer' ? 'เจ้าหน้าที่' : 'ผู้ดูแลระบบ'}
-                      </span>
-                      <a href="/logout" className="text-gray-600 hover:text-gray-900 text-sm">
-                        ออกจากระบบ
+                    <div className="space-y-2">
+                      <a
+                        href={`/${userType}/profile`}
+                        className="flex items-center space-x-3 text-gray-700 hover:text-primary-600 block px-3 py-2 text-base font-medium w-full text-left"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <UserIcon className="h-5 w-5" />
+                        <span>โปรไฟล์ส่วนตัว</span>
+                      </a>
+                      <a
+                        href={`/${userType}/notifications`}
+                        className="flex items-center space-x-3 text-gray-700 hover:text-primary-600 block px-3 py-2 text-base font-medium w-full text-left"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <BellIcon className="h-5 w-5" />
+                        <span>การแจ้งเตือน</span>
+                      </a>
+                      <a
+                        href="/logout"
+                        className="flex items-center space-x-3 text-red-600 hover:text-red-700 block px-3 py-2 text-base font-medium w-full text-left"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <XMarkIcon className="h-5 w-5" />
+                        <span>ออกจากระบบ</span>
                       </a>
                     </div>
                   </div>
