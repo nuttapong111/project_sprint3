@@ -1,13 +1,19 @@
 'use client';
 
+import { useState } from 'react';
 import { 
   EnvelopeIcon, 
   PhoneIcon, 
   MapPinIcon,
   GlobeAltIcon
 } from '@heroicons/react/24/outline';
+import CookiePolicyModal from './CookiePolicyModal';
+import AccessibilityModal from './AccessibilityModal';
 
 export default function Footer() {
+  const [isCookieModalOpen, setIsCookieModalOpen] = useState(false);
+  const [isAccessibilityModalOpen, setIsAccessibilityModalOpen] = useState(false);
+
   const footerLinks = {
     services: [
       { name: 'กระเป๋าเอกสารดิจิทัล', href: '#' },
@@ -17,16 +23,16 @@ export default function Footer() {
       { name: 'แจ้งปัญหา', href: '#' }
     ],
     support: [
-      { name: 'ศูนย์ช่วยเหลือ', href: '#' },
-      { name: 'คำถามที่พบบ่อย', href: '#' },
-      { name: 'ติดต่อเจ้าหน้าที่', href: '#' },
-      { name: 'รายงานปัญหา', href: '#' }
+      { name: 'ศูนย์ช่วยเหลือ', href: '/help' },
+      { name: 'คำถามที่พบบ่อย', href: '/faq' },
+      { name: 'ติดต่อเจ้าหน้าที่', href: '/contact' },
+      { name: 'รายงานปัญหา', href: '/report' }
     ],
     legal: [
-      { name: 'นโยบายความเป็นส่วนตัว', href: '#' },
-      { name: 'เงื่อนไขการใช้งาน', href: '#' },
-      { name: 'นโยบายคุกกี้', href: '#' },
-      { name: 'ข้อกำหนดการเข้าถึง', href: '#' }
+      { name: 'นโยบายความเป็นส่วนตัว', href: '/privacy' },
+      { name: 'เงื่อนไขการใช้งาน', href: '/terms' },
+      { name: 'นโยบายคุกกี้', href: '#', onClick: () => setIsCookieModalOpen(true) },
+      { name: 'ข้อกำหนดการเข้าถึง', href: '#', onClick: () => setIsAccessibilityModalOpen(true) }
     ]
   };
 
@@ -113,12 +119,21 @@ export default function Footer() {
             <ul className="space-y-2">
               {footerLinks.legal.map((link) => (
                 <li key={link.name}>
-                  <a
-                    href={link.href}
-                    className="text-gray-400 hover:text-white text-sm transition-colors duration-200"
-                  >
-                    {link.name}
-                  </a>
+                  {link.onClick ? (
+                    <button
+                      onClick={link.onClick}
+                      className="text-gray-400 hover:text-white text-sm transition-colors duration-200 text-left"
+                    >
+                      {link.name}
+                    </button>
+                  ) : (
+                    <a
+                      href={link.href}
+                      className="text-gray-400 hover:text-white text-sm transition-colors duration-200"
+                    >
+                      {link.name}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>
@@ -148,6 +163,16 @@ export default function Footer() {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <CookiePolicyModal 
+        isOpen={isCookieModalOpen} 
+        onClose={() => setIsCookieModalOpen(false)} 
+      />
+      <AccessibilityModal 
+        isOpen={isAccessibilityModalOpen} 
+        onClose={() => setIsAccessibilityModalOpen(false)} 
+      />
     </footer>
   );
 }
