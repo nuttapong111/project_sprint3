@@ -1,386 +1,283 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  CogIcon,
+import { motion } from 'framer-motion';
+import {
   UserIcon,
   EnvelopeIcon,
   PhoneIcon,
   MapPinIcon,
-  CalendarDaysIcon,
-  ShieldCheckIcon,
-  EyeIcon,
-  EyeSlashIcon,
+  CalendarIcon,
+  IdentificationIcon,
   PencilIcon,
   CheckIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
+import Header from '@/components/Header';
 
-export default function Profile() {
+interface UserProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  thaiId: string;
+  address: string;
+  dateOfBirth: string;
+  userType: string;
+  department?: string;
+  position?: string;
+}
+
+const mockProfile: UserProfile = {
+  firstName: 'สมชาย',
+  lastName: 'ใจดี',
+  email: 'john.doe@email.com',
+  phone: '0812345678',
+  thaiId: '1234567890123',
+  address: '123 ถนนสุขุมวิท แขวงคลองตัน เขตวัฒนา กรุงเทพมหานคร 10110',
+  dateOfBirth: '15/03/1990',
+  userType: 'ประชาชน',
+  department: undefined,
+  position: undefined
+};
+
+export default function ProfilePage() {
+  const [profile, setProfile] = useState<UserProfile>(mockProfile);
   const [isEditing, setIsEditing] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState('personal');
-
-  const [profileData, setProfileData] = useState({
-    firstName: 'สมชาย',
-    lastName: 'ใจดี',
-    thaiId: '1234567890123',
-    email: 'somchai@email.com',
-    phone: '0812345678',
-    address: '123 ถนนสุขุมวิท แขวงคลองตัน เขตวัฒนา กรุงเทพมหานคร 10110',
-    birthDate: '1990-01-15',
-    gender: 'male',
-    password: 'password123'
-  });
-
-  const [editData, setEditData] = useState(profileData);
-
-  const tabs = [
-    { id: 'personal', name: 'ข้อมูลส่วนตัว', icon: UserIcon },
-    { id: 'security', name: 'ความปลอดภัย', icon: ShieldCheckIcon },
-    { id: 'preferences', name: 'การตั้งค่า', icon: CogIcon }
-  ];
+  const [editedProfile, setEditedProfile] = useState<UserProfile>(mockProfile);
 
   const handleEdit = () => {
-    setEditData(profileData);
+    setEditedProfile({ ...profile });
     setIsEditing(true);
   };
 
   const handleSave = () => {
-    setProfileData(editData);
+    setProfile({ ...editedProfile });
     setIsEditing(false);
-    alert('บันทึกข้อมูลเรียบร้อยแล้ว');
   };
 
   const handleCancel = () => {
-    setEditData(profileData);
+    setEditedProfile({ ...profile });
     setIsEditing(false);
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setEditData(prev => ({
+  const handleInputChange = (field: keyof UserProfile, value: string) => {
+    setEditedProfile(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const renderPersonalInfo = () => (
-    <div className="space-y-6">
-      <div className="grid md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">ชื่อ</label>
-          {isEditing ? (
-            <input
-              type="text"
-              value={editData.firstName}
-              onChange={(e) => handleInputChange('firstName', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          ) : (
-            <p className="text-gray-900">{profileData.firstName}</p>
-          )}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">นามสกุล</label>
-          {isEditing ? (
-            <input
-              type="text"
-              value={editData.lastName}
-              onChange={(e) => handleInputChange('lastName', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          ) : (
-            <p className="text-gray-900">{profileData.lastName}</p>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">หมายเลขบัตรประชาชน</label>
-        <p className="text-gray-900">{profileData.thaiId}</p>
-        <p className="text-sm text-gray-500">ไม่สามารถแก้ไขได้</p>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">อีเมล</label>
-          {isEditing ? (
-            <input
-              type="email"
-              value={editData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          ) : (
-            <p className="text-gray-900">{profileData.email}</p>
-          )}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">เบอร์โทรศัพท์</label>
-          {isEditing ? (
-            <input
-              type="tel"
-              value={editData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          ) : (
-            <p className="text-gray-900">{profileData.phone}</p>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">ที่อยู่</label>
-        {isEditing ? (
-          <textarea
-            value={editData.address}
-            onChange={(e) => handleInputChange('address', e.target.value)}
-            rows={3}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          />
-        ) : (
-          <p className="text-gray-900">{profileData.address}</p>
-        )}
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">วันเกิด</label>
-          {isEditing ? (
-            <input
-              type="date"
-              value={editData.birthDate}
-              onChange={(e) => handleInputChange('birthDate', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          ) : (
-            <p className="text-gray-900">{profileData.birthDate}</p>
-          )}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">เพศ</label>
-          {isEditing ? (
-            <select
-              value={editData.gender}
-              onChange={(e) => handleInputChange('gender', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="male">ชาย</option>
-              <option value="female">หญิง</option>
-              <option value="other">อื่นๆ</option>
-            </select>
-          ) : (
-            <p className="text-gray-900">{profileData.gender === 'male' ? 'ชาย' : profileData.gender === 'female' ? 'หญิง' : 'อื่นๆ'}</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderSecurityInfo = () => (
-    <div className="space-y-6">
-      <div className="card bg-yellow-50 border-yellow-200">
-        <div className="flex items-center space-x-3">
-          <ShieldCheckIcon className="h-6 w-6 text-yellow-600" />
-          <div>
-            <h3 className="font-semibold text-yellow-900">ความปลอดภัยของบัญชี</h3>
-            <p className="text-sm text-yellow-800">ตรวจสอบการตั้งค่าความปลอดภัยของบัญชีของคุณ</p>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">รหัสผ่านปัจจุบัน</label>
-        <div className="relative">
-          <input
-            type={showPassword ? 'text' : 'password'}
-            value={profileData.password}
-            readOnly
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            {showPassword ? (
-              <EyeSlashIcon className="h-5 w-5" />
-            ) : (
-              <EyeIcon className="h-5 w-5" />
-            )}
-          </button>
-        </div>
-        <button className="mt-2 text-primary-600 hover:text-primary-700 text-sm font-medium">
-          เปลี่ยนรหัสผ่าน
-        </button>
-      </div>
-
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">การเข้าสู่ระบบล่าสุด</h3>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <CheckIcon className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <p className="font-medium text-gray-900">เข้าสู่ระบบสำเร็จ</p>
-                <p className="text-sm text-gray-600">IP: 192.168.1.100</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">วันนี้ 14:30</p>
-              <p className="text-xs text-gray-500">Chrome, Windows</p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="font-medium text-gray-900">เข้าสู่ระบบล้มเหลว</p>
-                <p className="text-sm text-gray-600">IP: 192.168.1.101</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">เมื่อวาน 22:15</p>
-              <p className="text-xs text-gray-500">Safari, iOS</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderPreferences = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">การแจ้งเตือน</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">การแจ้งเตือนทางอีเมล</p>
-              <p className="text-sm text-gray-600">รับการแจ้งเตือนผ่านอีเมล</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" defaultChecked className="sr-only peer" />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">การแจ้งเตือนทาง SMS</p>
-              <p className="text-sm text-gray-600">รับการแจ้งเตือนผ่าน SMS</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">การแจ้งเตือนในแอป</p>
-              <p className="text-sm text-gray-600">รับการแจ้งเตือนในแอปพลิเคชัน</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" defaultChecked className="sr-only peer" />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">ความเป็นส่วนตัว</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">แชร์ข้อมูลเพื่อการวิจัย</p>
-              <p className="text-sm text-gray-600">อนุญาตให้ใช้ข้อมูลเพื่อการวิจัยและพัฒนาบริการ</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-            </label>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const profileFields = [
+    {
+      key: 'firstName' as keyof UserProfile,
+      label: 'ชื่อ',
+      icon: UserIcon,
+      editable: true
+    },
+    {
+      key: 'lastName' as keyof UserProfile,
+      label: 'นามสกุล',
+      icon: UserIcon,
+      editable: true
+    },
+    {
+      key: 'email' as keyof UserProfile,
+      label: 'อีเมล',
+      icon: EnvelopeIcon,
+      editable: true
+    },
+    {
+      key: 'phone' as keyof UserProfile,
+      label: 'เบอร์โทรศัพท์',
+      icon: PhoneIcon,
+      editable: true
+    },
+    {
+      key: 'thaiId' as keyof UserProfile,
+      label: 'หมายเลขบัตรประชาชน',
+      icon: IdentificationIcon,
+      editable: false
+    },
+    {
+      key: 'address' as keyof UserProfile,
+      label: 'ที่อยู่',
+      icon: MapPinIcon,
+      editable: true
+    },
+    {
+      key: 'dateOfBirth' as keyof UserProfile,
+      label: 'วันเกิด',
+      icon: CalendarIcon,
+      editable: true
+    },
+    {
+      key: 'userType' as keyof UserProfile,
+      label: 'ประเภทผู้ใช้',
+      icon: UserIcon,
+      editable: false
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+      <Header isLoggedIn={true} userType="citizen" />
+      
+      <main className="w-full px-6 lg:px-8 py-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">ตั้งค่าโปรไฟล์</h1>
-              <p className="text-gray-600">จัดการข้อมูลส่วนตัวและการตั้งค่าของคุณ</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                โปรไฟล์ส่วนตัว
+              </h1>
+              <p className="text-gray-600">
+                จัดการข้อมูลส่วนตัวและการตั้งค่าบัญชี
+              </p>
             </div>
             {!isEditing ? (
-              <button onClick={handleEdit} className="btn-primary flex items-center">
-                <PencilIcon className="h-5 w-5 mr-2" />
-                แก้ไขข้อมูล
+              <button
+                onClick={handleEdit}
+                className="btn-primary flex items-center space-x-2"
+              >
+                <PencilIcon className="h-4 w-4" />
+                <span>แก้ไขข้อมูล</span>
               </button>
             ) : (
               <div className="flex space-x-3">
-                <button onClick={handleCancel} className="btn-secondary flex items-center">
-                  <XMarkIcon className="h-5 w-5 mr-2" />
-                  ยกเลิก
+                <button
+                  onClick={handleCancel}
+                  className="btn-secondary flex items-center space-x-2"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                  <span>ยกเลิก</span>
                 </button>
-                <button onClick={handleSave} className="btn-primary flex items-center">
-                  <CheckIcon className="h-5 w-5 mr-2" />
-                  บันทึก
+                <button
+                  onClick={handleSave}
+                  className="btn-primary flex items-center space-x-2"
+                >
+                  <CheckIcon className="h-4 w-4" />
+                  <span>บันทึก</span>
                 </button>
               </div>
             )}
           </div>
         </div>
-      </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="card">
-              <nav className="space-y-1">
-                {tabs.map((tab) => {
-                  const IconComponent = tab.icon;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        activeTab === tab.id
-                          ? 'bg-primary-100 text-primary-700'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                    >
-                      <IconComponent className="h-5 w-5" />
-                      <span>{tab.name}</span>
-                    </button>
-                  );
-                })}
-              </nav>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Profile Information */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                  ข้อมูลส่วนตัว
+                </h2>
+                <div className="space-y-6">
+                  {profileFields.map((field, index) => {
+                    const IconComponent = field.icon;
+                    const value = isEditing ? editedProfile[field.key] : profile[field.key];
+                    
+                    return (
+                      <motion.div
+                        key={field.key}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        className="flex items-start space-x-4"
+                      >
+                        <div className="flex-shrink-0 p-2 bg-primary-100 rounded-lg">
+                          <IconComponent className="h-5 w-5 text-primary-600" />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            {field.label}
+                          </label>
+                          {isEditing && field.editable ? (
+                            <input
+                              type={field.key === 'email' ? 'email' : field.key === 'phone' ? 'tel' : 'text'}
+                              value={value || ''}
+                              onChange={(e) => handleInputChange(field.key, e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            />
+                          ) : (
+                            <p className="text-sm text-gray-900">
+                              {value || '-'}
+                            </p>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            <div className="card">
-              {activeTab === 'personal' && renderPersonalInfo()}
-              {activeTab === 'security' && renderSecurityInfo()}
-              {activeTab === 'preferences' && renderPreferences()}
+          {/* Profile Summary & Actions */}
+          <div className="space-y-6">
+            {/* Profile Avatar */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="text-center">
+                <div className="w-24 h-24 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl text-white font-bold">
+                    {profile.firstName.charAt(0)}{profile.lastName.charAt(0)}
+                  </span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {profile.firstName} {profile.lastName}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {profile.userType}
+                </p>
+              </div>
+            </div>
+
+            {/* Account Status */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                สถานะบัญชี
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">สถานะการยืนยัน</span>
+                  <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                    ยืนยันแล้ว
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">การเข้าสู่ระบบล่าสุด</span>
+                  <span className="text-sm text-gray-900">เมื่อวานนี้</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">จำนวนการเข้าสู่ระบบ</span>
+                  <span className="text-sm text-gray-900">45 ครั้ง</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                การดำเนินการ
+              </h3>
+              <div className="space-y-3">
+                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                  เปลี่ยนรหัสผ่าน
+                </button>
+                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                  การแจ้งเตือน
+                </button>
+                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                  ความเป็นส่วนตัว
+                </button>
+                <button className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200">
+                  ลบบัญชี
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

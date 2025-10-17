@@ -1,228 +1,233 @@
 'use client';
 
 import { useState } from 'react';
-import { 
+import { motion } from 'framer-motion';
+import {
   ExclamationTriangleIcon,
-  MicrophoneIcon,
-  StopIcon,
-  PlayIcon,
-  PaperAirplaneIcon,
+  DocumentTextIcon,
+  CameraIcon,
+  MapPinIcon,
+  CalendarIcon,
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon
 } from '@heroicons/react/24/outline';
+import Header from '@/components/Header';
 
-export default function ReportCrime() {
-  const [isRecording, setIsRecording] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [reportType, setReportType] = useState('');
-  const [location, setLocation] = useState('');
-  const [description, setDescription] = useState('');
+const reportTypes = [
+  {
+    id: 'theft',
+    name: 'การลักทรัพย์',
+    description: 'แจ้งความเกี่ยวกับการขโมยหรือลักทรัพย์',
+    icon: '🔒',
+    color: 'bg-red-100 text-red-600'
+  },
+  {
+    id: 'fraud',
+    name: 'การทุจริต',
+    description: 'แจ้งความเกี่ยวกับการทุจริตหรือคอร์รัปชัน',
+    icon: '💰',
+    color: 'bg-yellow-100 text-yellow-600'
+  },
+  {
+    id: 'violence',
+    name: 'การใช้ความรุนแรง',
+    description: 'แจ้งความเกี่ยวกับการใช้ความรุนแรง',
+    icon: '⚠️',
+    color: 'bg-orange-100 text-orange-600'
+  },
+  {
+    id: 'cyber',
+    name: 'อาชญากรรมไซเบอร์',
+    description: 'แจ้งความเกี่ยวกับการหลอกลวงทางออนไลน์',
+    icon: '💻',
+    color: 'bg-blue-100 text-blue-600'
+  },
+  {
+    id: 'other',
+    name: 'อื่นๆ',
+    description: 'แจ้งความเรื่องอื่นๆ',
+    icon: '📋',
+    color: 'bg-gray-100 text-gray-600'
+  }
+];
 
-  const reportTypes = [
-    { id: 'theft', name: 'การขโมย', icon: '🔓' },
-    { id: 'fraud', name: 'การฉ้อโกง', icon: '💳' },
-    { id: 'violence', name: 'การใช้ความรุนแรง', icon: '👊' },
-    { id: 'drug', name: 'ยาเสพติด', icon: '💊' },
-    { id: 'traffic', name: 'การจราจร', icon: '🚗' },
-    { id: 'other', name: 'อื่นๆ', icon: '📋' }
-  ];
+const recentReports = [
+  {
+    id: '1',
+    type: 'การทุจริต',
+    title: 'การทุจริตในหน่วยงานราชการ',
+    date: '15/12/2024',
+    status: 'กำลังดำเนินการ',
+    statusColor: 'bg-blue-100 text-blue-800'
+  },
+  {
+    id: '2',
+    type: 'การลักทรัพย์',
+    title: 'ขโมยรถจักรยานยนต์',
+    date: '10/12/2024',
+    status: 'เสร็จสิ้น',
+    statusColor: 'bg-green-100 text-green-800'
+  },
+  {
+    id: '3',
+    type: 'อาชญากรรมไซเบอร์',
+    title: 'การหลอกลวงทางออนไลน์',
+    date: '05/12/2024',
+    status: 'รอดำเนินการ',
+    statusColor: 'bg-yellow-100 text-yellow-800'
+  }
+];
 
-  const handleStartRecording = () => {
-    setIsRecording(true);
-    // Simulate recording
-    setTimeout(() => {
-      setTranscript('มีคนขโมยรถจักรยานยนต์ของฉันที่หน้าบ้านเมื่อคืนนี้ ต้องการให้ตำรวจมาดูกล้องวงจรปิด');
-      setIsRecording(false);
-    }, 3000);
+export default function ReportCrimePage() {
+  const [selectedType, setSelectedType] = useState('');
+  const [reports] = useState(recentReports);
+
+  const handleTypeSelect = (typeId: string) => {
+    setSelectedType(typeId);
   };
 
-  const handleStopRecording = () => {
-    setIsRecording(false);
-  };
-
-  const handleSubmitReport = async () => {
-    setIsProcessing(true);
-    // Simulate processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      alert('ส่งรายงานเรียบร้อยแล้ว หมายเลขรายงาน: #CR2024001');
-    }, 2000);
+  const handleSubmitReport = () => {
+    console.log('Submit report:', selectedType);
+    // TODO: Implement report submission
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <h1 className="text-2xl font-bold text-gray-900">แจ้งความออนไลน์</h1>
-            <p className="text-gray-600">รายงานเหตุการณ์ผ่าน AI Assistant</p>
-          </div>
+      <Header isLoggedIn={true} userType="citizen" />
+      
+      <main className="w-full px-6 lg:px-8 py-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            แจ้งความออนไลน์
+          </h1>
+          <p className="text-gray-600">
+            แจ้งความผ่านระบบออนไลน์อย่างปลอดภัยและรวดเร็ว
+          </p>
         </div>
-      </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* AI Chat Interface */}
-          <div className="card">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-xl">🤖</span>
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">AI Assistant</h2>
-                <p className="text-sm text-gray-600">พูดคุยกับ AI เพื่อรายงานเหตุการณ์</p>
-              </div>
-            </div>
-
-            {/* Chat Messages */}
-            <div className="space-y-4 mb-6 h-64 overflow-y-auto border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <div className="flex items-start space-x-2">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm">🤖</span>
-                </div>
-                <div className="bg-white p-3 rounded-lg shadow-sm">
-                  <p className="text-sm text-gray-900">สวัสดีครับ ผมคือ AI Assistant ของตำรวจ</p>
-                  <p className="text-sm text-gray-900">กรุณาบอกเล่าเหตุการณ์ที่เกิดขึ้นให้ผมฟังครับ</p>
-                </div>
-              </div>
-
-              {transcript && (
-                <div className="flex items-start space-x-2 justify-end">
-                  <div className="bg-primary-100 p-3 rounded-lg shadow-sm max-w-xs">
-                    <p className="text-sm text-gray-900">{transcript}</p>
-                  </div>
-                  <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm">👤</span>
-                  </div>
-                </div>
-              )}
-
-              {isRecording && (
-                <div className="flex items-center space-x-2 text-red-600">
-                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm">กำลังบันทึกเสียง...</span>
-                </div>
-              )}
-            </div>
-
-            {/* Voice Controls */}
-            <div className="flex space-x-3">
-              {!isRecording ? (
-                <button
-                  onClick={handleStartRecording}
-                  className="flex-1 btn-primary flex items-center justify-center"
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Report Types */}
+          <div className="lg:col-span-2">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              เลือกประเภทการแจ้งความ
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {reportTypes.map((type, index) => (
+                <motion.button
+                  key={type.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  onClick={() => handleTypeSelect(type.id)}
+                  className={`p-6 rounded-lg border-2 text-left transition-all duration-200 ${
+                    selectedType === type.id
+                      ? 'border-primary-500 bg-primary-50'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
                 >
-                  <MicrophoneIcon className="h-5 w-5 mr-2" />
-                  เริ่มบันทึกเสียง
-                </button>
-              ) : (
-                <button
-                  onClick={handleStopRecording}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center"
-                >
-                  <StopIcon className="h-5 w-5 mr-2" />
-                  หยุดบันทึก
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Report Form */}
-          <div className="space-y-6">
-            {/* Report Type */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">ประเภทการแจ้งความ</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {reportTypes.map((type) => (
-                  <button
-                    key={type.id}
-                    onClick={() => setReportType(type.id)}
-                    className={`p-4 border rounded-lg text-left transition-colors ${
-                      reportType === type.id
-                        ? 'border-primary-500 bg-primary-50 text-primary-700'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    <div className="text-2xl mb-2">{type.icon}</div>
-                    <div className="text-sm font-medium">{type.name}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Location */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">สถานที่เกิดเหตุ</h3>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="กรอกสถานที่เกิดเหตุ"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Description */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">รายละเอียดเพิ่มเติม</h3>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                placeholder="กรอกรายละเอียดเพิ่มเติมเกี่ยวกับเหตุการณ์"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
+                  <div className="flex items-start space-x-4">
+                    <div className={`p-3 rounded-lg ${type.color}`}>
+                      <span className="text-2xl">{type.icon}</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        {type.name}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {type.description}
+                      </p>
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
             </div>
 
             {/* Submit Button */}
-            <button
-              onClick={handleSubmitReport}
-              disabled={isProcessing || !reportType || !location}
-              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {isProcessing ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  กำลังส่งรายงาน...
-                </>
-              ) : (
-                <>
-                  <PaperAirplaneIcon className="h-5 w-5 mr-2" />
-                  ส่งรายงาน
-                </>
-              )}
-            </button>
+            {selectedType && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mt-8"
+              >
+                <button
+                  onClick={handleSubmitReport}
+                  className="w-full btn-primary text-lg py-4"
+                >
+                  เริ่มแจ้งความ
+                </button>
+              </motion.div>
+            )}
           </div>
-        </div>
 
-        {/* Emergency Contacts */}
-        <div className="mt-8 card bg-red-50 border-red-200">
-          <div className="flex items-center space-x-3 mb-4">
-            <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
-            <h3 className="text-lg font-semibold text-red-900">กรณีฉุกเฉิน</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-2xl mb-2">🚨</div>
-              <p className="font-semibold text-red-900">191</p>
-              <p className="text-sm text-red-700">ตำรวจ</p>
+          {/* Recent Reports */}
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              การแจ้งความล่าสุด
+            </h2>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="p-6">
+                <div className="space-y-4">
+                  {reports.map((report, index) => (
+                    <motion.div
+                      key={report.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      className="border-l-4 border-primary-500 pl-4"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-sm font-medium text-gray-900 mb-1">
+                            {report.title}
+                          </h3>
+                          <p className="text-xs text-gray-500 mb-2">
+                            {report.type} • {report.date}
+                          </p>
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${report.statusColor}`}>
+                            {report.status}
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <a
+                    href="#"
+                    className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                  >
+                    ดูประวัติการแจ้งความทั้งหมด →
+                  </a>
+                </div>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl mb-2">🚑</div>
-              <p className="font-semibold text-red-900">1669</p>
-              <p className="text-sm text-red-700">รถพยาบาล</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl mb-2">🔥</div>
-              <p className="font-semibold text-red-900">199</p>
-              <p className="text-sm text-red-700">ดับเพลิง</p>
+
+            {/* Quick Info */}
+            <div className="mt-6 bg-blue-50 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-blue-900 mb-3">
+                ข้อมูลสำคัญ
+              </h3>
+              <ul className="space-y-2 text-sm text-blue-800">
+                <li className="flex items-center space-x-2">
+                  <CheckCircleIcon className="h-4 w-4" />
+                  <span>ข้อมูลจะถูกส่งไปยังหน่วยงานที่เกี่ยวข้อง</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircleIcon className="h-4 w-4" />
+                  <span>สามารถติดตามสถานะได้ตลอดเวลา</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircleIcon className="h-4 w-4" />
+                  <span>ข้อมูลส่วนตัวจะถูกปกป้องอย่างปลอดภัย</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

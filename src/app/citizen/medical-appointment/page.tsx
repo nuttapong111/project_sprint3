@@ -1,324 +1,317 @@
 'use client';
 
 import { useState } from 'react';
-import { 
+import { motion } from 'framer-motion';
+import {
   HeartIcon,
-  CalendarDaysIcon,
+  CalendarIcon,
   ClockIcon,
+  MapPinIcon,
+  UserIcon,
+  PhoneIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  UserGroupIcon,
-  MapPinIcon,
-  PhoneIcon,
   PlusIcon
 } from '@heroicons/react/24/outline';
+import Header from '@/components/Header';
 
-export default function MedicalAppointment() {
+const hospitals = [
+  {
+    id: '1',
+    name: 'โรงพยาบาลศิริราช',
+    address: 'ถนนวังหลัง แขวงศิริราช เขตบางกอกน้อย กรุงเทพมหานคร',
+    phone: '02-419-7000',
+    specialties: ['อายุรกรรม', 'ศัลยกรรม', 'กุมารเวชกรรม', 'สูติ-นรีเวชกรรม'],
+    availableSlots: 15
+  },
+  {
+    id: '2',
+    name: 'โรงพยาบาลจุฬาลงกรณ์',
+    address: 'ถนนพระราม 4 แขวงลุมพินี เขตปทุมวัน กรุงเทพมหานคร',
+    phone: '02-256-4000',
+    specialties: ['อายุรกรรม', 'ศัลยกรรม', 'กุมารเวชกรรม', 'จิตเวช'],
+    availableSlots: 8
+  },
+  {
+    id: '3',
+    name: 'โรงพยาบาลรามาธิบดี',
+    address: 'ถนนพระราม 6 แขวงทุ่งพญาไท เขตราชเทวี กรุงเทพมหานคร',
+    phone: '02-201-1000',
+    specialties: ['อายุรกรรม', 'ศัลยกรรม', 'กุมารเวชกรรม', 'ทันตกรรม'],
+    availableSlots: 12
+  }
+];
+
+const specialties = [
+  { id: 'internal', name: 'อายุรกรรม', icon: '🩺' },
+  { id: 'surgery', name: 'ศัลยกรรม', icon: '🏥' },
+  { id: 'pediatrics', name: 'กุมารเวชกรรม', icon: '👶' },
+  { id: 'obstetrics', name: 'สูติ-นรีเวชกรรม', icon: '🤱' },
+  { id: 'cardiology', name: 'โรคหัวใจ', icon: '❤️' },
+  { id: 'dermatology', name: 'ผิวหนัง', icon: '🧴' }
+];
+
+const recentAppointments = [
+  {
+    id: '1',
+    hospital: 'โรงพยาบาลศิริราช',
+    doctor: 'นพ. สมชาย ใจดี',
+    specialty: 'อายุรกรรม',
+    date: '25/12/2024',
+    time: '09:00',
+    status: 'ยืนยันแล้ว',
+    statusColor: 'bg-green-100 text-green-800'
+  },
+  {
+    id: '2',
+    hospital: 'โรงพยาบาลจุฬาลงกรณ์',
+    doctor: 'นพ. สมหญิง รักดี',
+    specialty: 'กุมารเวชกรรม',
+    date: '28/12/2024',
+    time: '14:30',
+    status: 'รอยืนยัน',
+    statusColor: 'bg-yellow-100 text-yellow-800'
+  }
+];
+
+const insuranceInfo = {
+  type: 'บัตรทอง',
+  number: '1234567890123',
+  status: 'ใช้งานได้',
+  expiryDate: '31/12/2025'
+};
+
+export default function MedicalAppointmentPage() {
+  const [selectedSpecialty, setSelectedSpecialty] = useState('');
   const [selectedHospital, setSelectedHospital] = useState('');
-  const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
-  const [symptoms, setSymptoms] = useState('');
-  const [isBooking, setIsBooking] = useState(false);
+  const [appointments] = useState(recentAppointments);
 
-  const hospitals = [
-    {
-      id: 'rajavithi',
-      name: 'โรงพยาบาลราชวิถี',
-      address: '2 ถนนราชวิถี แขวงทุ่งพญาไท เขตราชเทวี กรุงเทพมหานคร 10400',
-      phone: '02-354-8100',
-      departments: ['อายุรกรรม', 'ศัลยกรรม', 'กุมารเวชกรรม', 'สูติ-นารีเวชกรรม', 'จักษุวิทยา'],
-      availableSlots: ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
-    },
-    {
-      id: 'siriraj',
-      name: 'โรงพยาบาลศิริราช',
-      address: '2 ถนนวังหลัง แขวงศิริราช เขตบางกอกน้อย กรุงเทพมหานคร 10700',
-      phone: '02-419-7000',
-      departments: ['อายุรกรรม', 'ศัลยกรรม', 'กุมารเวชกรรม', 'สูติ-นารีเวชกรรม', 'จักษุวิทยา', 'หูคอจมูก'],
-      availableSlots: ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00']
-    },
-    {
-      id: 'ramathibodi',
-      name: 'โรงพยาบาลรามาธิบดี',
-      address: '270 ถนนพระราม 6 แขวงทุ่งพญาไท เขตราชเทวี กรุงเทพมหานคร 10400',
-      phone: '02-201-1000',
-      departments: ['อายุรกรรม', 'ศัลยกรรม', 'กุมารเวชกรรม', 'สูติ-นารีเวชกรรม', 'จักษุวิทยา', 'หูคอจมูก', 'จิตเวช'],
-      availableSlots: ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00']
-    }
-  ];
-
-  const insuranceTypes = [
-    { id: 'gold', name: 'บัตรทอง', coverage: '100%', icon: '🏥' },
-    { id: 'social', name: 'ประกันสังคม', coverage: '80%', icon: '🛡️' },
-    { id: 'private', name: 'ประกันเอกชน', coverage: 'ตามเงื่อนไข', icon: '💼' },
-    { id: 'self', name: 'จ่ายเอง', coverage: '0%', icon: '💰' }
-  ];
-
-  const selectedHospitalData = hospitals.find(h => h.id === selectedHospital);
-
-  const handleBookAppointment = async () => {
-    if (!selectedHospital || !selectedDepartment || !selectedDate || !selectedTime) {
-      alert('กรุณากรอกข้อมูลให้ครบถ้วน');
-      return;
-    }
-
-    setIsBooking(true);
-    // Simulate booking
-    setTimeout(() => {
-      setIsBooking(false);
-      alert('นัดหมายสำเร็จแล้ว หมายเลขนัดหมาย: #APT2024001');
-      // Reset form
-      setSelectedHospital('');
-      setSelectedDepartment('');
-      setSelectedDate('');
-      setSelectedTime('');
-      setSymptoms('');
-    }, 2000);
+  const handleSpecialtySelect = (specialtyId: string) => {
+    setSelectedSpecialty(specialtyId);
   };
 
-  const upcomingAppointments = [
-    {
-      id: 1,
-      hospital: 'โรงพยาบาลราชวิถี',
-      department: 'อายุรกรรม',
-      date: '25 มกราคม 2567',
-      time: '10:00',
-      status: 'confirmed',
-      doctor: 'นพ.สมชาย ใจดี'
-    },
-    {
-      id: 2,
-      hospital: 'โรงพยาบาลศิริราช',
-      department: 'จักษุวิทยา',
-      date: '30 มกราคม 2567',
-      time: '14:00',
-      status: 'pending',
-      doctor: 'นพ.สมหญิง รักดี'
-    }
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed': return 'text-green-600 bg-green-100';
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
-      case 'cancelled': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
+  const handleHospitalSelect = (hospitalId: string) => {
+    setSelectedHospital(hospitalId);
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'confirmed': return 'ยืนยันแล้ว';
-      case 'pending': return 'รอยืนยัน';
-      case 'cancelled': return 'ยกเลิกแล้ว';
-      default: return 'ไม่ทราบสถานะ';
-    }
+  const handleBookAppointment = () => {
+    console.log('Book appointment:', selectedSpecialty, selectedHospital);
+    // TODO: Implement appointment booking
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <h1 className="text-2xl font-bold text-gray-900">พบแพทย์</h1>
-            <p className="text-gray-600">นัดหมายแพทย์และตรวจสอบสิทธิ์ประกัน</p>
-          </div>
+      <Header isLoggedIn={true} userType="citizen" />
+      
+      <main className="w-full px-6 lg:px-8 py-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            พบแพทย์
+          </h1>
+          <p className="text-gray-600">
+            นัดหมายแพทย์และตรวจสอบสิทธิ์ประกันสุขภาพ
+          </p>
         </div>
-      </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Booking Form */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Hospital Selection */}
-            <div className="card">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">เลือกโรงพยาบาล</h2>
-              <div className="space-y-4">
-                {hospitals.map((hospital) => (
-                  <button
-                    key={hospital.id}
-                    onClick={() => setSelectedHospital(hospital.id)}
-                    className={`w-full p-4 border rounded-lg text-left transition-all ${
-                      selectedHospital === hospital.id
-                        ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
-                        : 'border-gray-300 hover:border-gray-400 hover:shadow-md'
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Insurance Status */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                สิทธิ์ประกันสุขภาพ
+              </h2>
+              <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <CheckCircleIcon className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{insuranceInfo.type}</p>
+                    <p className="text-sm text-gray-600">หมายเลข: {insuranceInfo.number}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-green-800">{insuranceInfo.status}</p>
+                  <p className="text-xs text-gray-600">หมดอายุ: {insuranceInfo.expiryDate}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Specialty Selection */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                เลือกสาขาแพทย์
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {specialties.map((specialty, index) => (
+                  <motion.button
+                    key={specialty.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    onClick={() => handleSpecialtySelect(specialty.id)}
+                    className={`p-4 rounded-lg border-2 text-center transition-all duration-200 ${
+                      selectedSpecialty === specialty.id
+                        ? 'border-primary-500 bg-primary-50'
+                        : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <div className="flex items-start space-x-4">
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <HeartIcon className="h-6 w-6 text-blue-600" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">{hospital.name}</h3>
-                        <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
-                          <div className="flex items-center space-x-1">
-                            <MapPinIcon className="h-4 w-4" />
-                            <span>{hospital.address}</span>
+                    <div className="text-2xl mb-2">{specialty.icon}</div>
+                    <p className="text-sm font-medium text-gray-900">{specialty.name}</p>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+
+            {/* Hospital Selection */}
+            {selectedSpecialty && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-lg p-6 shadow-sm border border-gray-200"
+              >
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  เลือกโรงพยาบาล
+                </h2>
+                <div className="space-y-4">
+                  {hospitals.map((hospital, index) => (
+                    <motion.div
+                      key={hospital.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                        selectedHospital === hospital.id
+                          ? 'border-primary-500 bg-primary-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => handleHospitalSelect(hospital.id)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                            {hospital.name}
+                          </h3>
+                          <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+                            <div className="flex items-center space-x-1">
+                              <MapPinIcon className="h-4 w-4" />
+                              <span>{hospital.address}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <PhoneIcon className="h-4 w-4" />
+                              <span>{hospital.phone}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <PhoneIcon className="h-4 w-4" />
-                            <span>{hospital.phone}</span>
+                          <div className="flex flex-wrap gap-2">
+                            {hospital.specialties.map((specialty, specIndex) => (
+                              <span
+                                key={specIndex}
+                                className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                              >
+                                {specialty}
+                              </span>
+                            ))}
                           </div>
                         </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-primary-600">
+                            {hospital.availableSlots} ช่องว่าง
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Department & Time Selection */}
-            {selectedHospitalData && (
-              <div className="card">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">เลือกแผนกและเวลานัดหมาย</h2>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">แผนก</label>
-                    <select
-                      value={selectedDepartment}
-                      onChange={(e) => setSelectedDepartment(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    >
-                      <option value="">เลือกแผนก</option>
-                      {selectedHospitalData.departments.map((dept) => (
-                        <option key={dept} value={dept}>{dept}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">วันที่</label>
-                    <input
-                      type="date"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    />
-                  </div>
+                    </motion.div>
+                  ))}
                 </div>
-
-                <div className="mt-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">เวลาที่ต้องการ</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {selectedHospitalData.availableSlots.map((time) => (
-                      <button
-                        key={time}
-                        onClick={() => setSelectedTime(time)}
-                        className={`p-3 border rounded-lg text-center transition-colors ${
-                          selectedTime === time
-                            ? 'border-primary-500 bg-primary-50 text-primary-700'
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
-                      >
-                        {time}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">อาการเบื้องต้น</label>
-                  <textarea
-                    value={symptoms}
-                    onChange={(e) => setSymptoms(e.target.value)}
-                    rows={3}
-                    placeholder="กรอกรายละเอียดอาการที่พบ"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
+              </motion.div>
             )}
 
-            {/* Insurance Check */}
-            <div className="card">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">ตรวจสอบสิทธิ์ประกัน</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {insuranceTypes.map((insurance) => (
-                  <div
-                    key={insurance.id}
-                    className="p-4 border border-gray-200 rounded-lg text-center hover:border-primary-300 transition-colors cursor-pointer"
-                  >
-                    <div className="text-2xl mb-2">{insurance.icon}</div>
-                    <h3 className="font-semibold text-gray-900">{insurance.name}</h3>
-                    <p className="text-sm text-gray-600">{insurance.coverage}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              onClick={handleBookAppointment}
-              disabled={isBooking || !selectedHospital || !selectedDepartment || !selectedDate || !selectedTime}
-              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {isBooking ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  กำลังนัดหมาย...
-                </>
-              ) : (
-                <>
-                  <CalendarDaysIcon className="h-5 w-5 mr-2" />
-                  นัดหมายแพทย์
-                </>
-              )}
-            </button>
+            {/* Book Appointment Button */}
+            {selectedSpecialty && selectedHospital && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <button
+                  onClick={handleBookAppointment}
+                  className="w-full btn-primary text-lg py-4 flex items-center justify-center space-x-2"
+                >
+                  <CalendarIcon className="h-5 w-5" />
+                  <span>นัดหมายแพทย์</span>
+                </button>
+              </motion.div>
+            )}
           </div>
 
-          {/* Upcoming Appointments */}
+          {/* Sidebar */}
           <div className="space-y-6">
-            <div className="card">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">นัดหมายที่ใกล้จะถึง</h2>
-              <div className="space-y-4">
-                {upcomingAppointments.map((appointment) => (
-                  <div key={appointment.id} className="p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900">{appointment.hospital}</h3>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}>
-                        {getStatusText(appointment.status)}
+            {/* Recent Appointments */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  การนัดหมายล่าสุด
+                </h2>
+                <div className="space-y-4">
+                  {appointments.map((appointment, index) => (
+                    <motion.div
+                      key={appointment.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      className="border-l-4 border-primary-500 pl-4"
+                    >
+                      <h3 className="text-sm font-medium text-gray-900 mb-1">
+                        {appointment.hospital}
+                      </h3>
+                      <p className="text-xs text-gray-600 mb-1">
+                        {appointment.doctor} • {appointment.specialty}
+                      </p>
+                      <p className="text-xs text-gray-500 mb-2">
+                        {appointment.date} เวลา {appointment.time}
+                      </p>
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${appointment.statusColor}`}>
+                        {appointment.status}
                       </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-1">{appointment.department}</p>
-                    <p className="text-sm text-gray-600 mb-1">แพทย์: {appointment.doctor}</p>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <CalendarDaysIcon className="h-4 w-4" />
-                        <span>{appointment.date}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <ClockIcon className="h-4 w-4" />
-                        <span>{appointment.time}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    </motion.div>
+                  ))}
+                </div>
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <a
+                    href="#"
+                    className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                  >
+                    ดูประวัติการนัดหมายทั้งหมด →
+                  </a>
+                </div>
               </div>
             </div>
 
-            {/* Emergency Contacts */}
-            <div className="card bg-red-50 border-red-200">
-              <div className="flex items-center space-x-3 mb-4">
-                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
-                <h3 className="text-lg font-semibold text-red-900">กรณีฉุกเฉิน</h3>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-red-800">รถพยาบาล</span>
-                  <span className="font-semibold text-red-900">1669</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-red-800">ตำรวจ</span>
-                  <span className="font-semibold text-red-900">191</span>
-                </div>
-              </div>
+            {/* Quick Tips */}
+            <div className="bg-blue-50 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-blue-900 mb-3">
+                เคล็ดลับการนัดหมาย
+              </h3>
+              <ul className="space-y-2 text-sm text-blue-800">
+                <li className="flex items-center space-x-2">
+                  <CheckCircleIcon className="h-4 w-4" />
+                  <span>นัดหมายล่วงหน้า 1-2 สัปดาห์</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircleIcon className="h-4 w-4" />
+                  <span>เตรียมบัตรประชาชนและบัตรประกัน</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircleIcon className="h-4 w-4" />
+                  <span>มาถึงก่อนเวลานัด 15 นาที</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

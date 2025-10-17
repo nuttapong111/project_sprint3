@@ -1,296 +1,259 @@
 'use client';
 
 import { useState } from 'react';
-import { 
+import { motion } from 'framer-motion';
+import {
   ClipboardDocumentListIcon,
-  DocumentArrowUpIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
+  DocumentTextIcon,
+  PlusIcon,
   EyeIcon,
-  TrashIcon,
-  PlusIcon
+  ClockIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ArrowUpTrayIcon
 } from '@heroicons/react/24/outline';
+import Header from '@/components/Header';
 
-export default function SubmitDocuments() {
-  const [selectedForm, setSelectedForm] = useState('');
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const documentTypes = [
+  {
+    id: 'building_permit',
+    name: 'ใบอนุญาตก่อสร้าง',
+    description: 'ยื่นขอใบอนุญาตก่อสร้างอาคาร',
+    icon: '🏗️',
+    color: 'bg-orange-100 text-orange-600',
+    requiredDocs: ['แบบแปลนอาคาร', 'หนังสือรับรองวิศวกร', 'หลักฐานการเป็นเจ้าของที่ดิน']
+  },
+  {
+    id: 'business_license',
+    name: 'ใบอนุญาตประกอบการ',
+    description: 'ยื่นขอใบอนุญาตประกอบธุรกิจ',
+    icon: '🏪',
+    color: 'bg-green-100 text-green-600',
+    requiredDocs: ['สำเนาบัตรประชาชน', 'หนังสือรับรองบริษัท', 'แผนที่ตั้งสถานที่']
+  },
+  {
+    id: 'driving_license',
+    name: 'ใบขับขี่',
+    description: 'ยื่นขอหรือต่ออายุใบขับขี่',
+    icon: '🚗',
+    color: 'bg-blue-100 text-blue-600',
+    requiredDocs: ['สำเนาบัตรประชาชน', 'ใบรับรองแพทย์', 'รูปถ่าย']
+  },
+  {
+    id: 'passport',
+    name: 'หนังสือเดินทาง',
+    description: 'ยื่นขอหนังสือเดินทาง',
+    icon: '📘',
+    color: 'bg-purple-100 text-purple-600',
+    requiredDocs: ['สำเนาบัตรประชาชน', 'สำเนาทะเบียนบ้าน', 'รูปถ่าย']
+  },
+  {
+    id: 'marriage_certificate',
+    name: 'ใบสำคัญสมรส',
+    description: 'ยื่นขอใบสำคัญสมรส',
+    icon: '💍',
+    color: 'bg-pink-100 text-pink-600',
+    requiredDocs: ['สำเนาบัตรประชาชน', 'สำเนาทะเบียนบ้าน', 'หลักฐานการหย่า (ถ้ามี)']
+  }
+];
 
-  const availableForms = [
-    {
-      id: 'building-permit',
-      name: 'ใบอนุญาตก่อสร้าง',
-      description: 'ยื่นขออนุญาตก่อสร้างอาคาร',
-      icon: '🏗️',
-      requiredDocs: ['แบบแปลนอาคาร', 'หนังสือรับรองวิศวกร', 'เอกสารกรรมสิทธิ์ที่ดิน'],
-      processingTime: '15-30 วัน'
-    },
-    {
-      id: 'business-license',
-      name: 'ใบอนุญาตประกอบธุรกิจ',
-      description: 'ยื่นขออนุญาตประกอบธุรกิจ',
-      icon: '🏪',
-      requiredDocs: ['สำเนาบัตรประชาชน', 'หนังสือรับรองบริษัท', 'แผนที่ตั้งร้าน'],
-      processingTime: '7-14 วัน'
-    },
-    {
-      id: 'marriage-cert',
-      name: 'ใบสำคัญสมรส',
-      description: 'ยื่นขอใบสำคัญสมรส',
-      icon: '💒',
-      requiredDocs: ['สำเนาบัตรประชาชน', 'สำเนาทะเบียนบ้าน', 'หลักฐานการหย่า (ถ้ามี)'],
-      processingTime: '3-7 วัน'
-    },
-    {
-      id: 'birth-cert',
-      name: 'สูติบัตร',
-      description: 'ยื่นขอสูติบัตร',
-      icon: '👶',
-      requiredDocs: ['หนังสือรับรองแพทย์', 'สำเนาบัตรประชาชนผู้ปกครอง', 'สำเนาทะเบียนสมรส'],
-      processingTime: '1-3 วัน'
-    },
-    {
-      id: 'death-cert',
-      name: 'มรณบัตร',
-      description: 'ยื่นขอมรณบัตร',
-      icon: '🕊️',
-      requiredDocs: ['หนังสือรับรองแพทย์', 'สำเนาบัตรประชาชนผู้ตาย', 'หลักฐานการตาย'],
-      processingTime: '1-3 วัน'
-    },
-    {
-      id: 'id-card',
-      name: 'บัตรประชาชน',
-      description: 'ยื่นขอ/ต่ออายุบัตรประชาชน',
-      icon: '🆔',
-      requiredDocs: ['รูปถ่าย', 'หลักฐานการเปลี่ยนชื่อ (ถ้ามี)', 'หลักฐานการเปลี่ยนที่อยู่'],
-      processingTime: '7-14 วัน'
-    }
-  ];
+const recentSubmissions = [
+  {
+    id: '1',
+    type: 'ใบอนุญาตก่อสร้าง',
+    date: '20/12/2024',
+    status: 'รอการตรวจสอบ',
+    statusColor: 'bg-yellow-100 text-yellow-800',
+    progress: 60
+  },
+  {
+    id: '2',
+    type: 'ใบอนุญาตประกอบการ',
+    date: '15/12/2024',
+    status: 'อนุมัติแล้ว',
+    statusColor: 'bg-green-100 text-green-800',
+    progress: 100
+  },
+  {
+    id: '3',
+    type: 'ใบขับขี่',
+    date: '10/12/2024',
+    status: 'ต้องแก้ไข',
+    statusColor: 'bg-red-100 text-red-800',
+    progress: 30
+  }
+];
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setUploadedFiles(prev => [...prev, ...newFiles]);
-    }
+export default function SubmitDocumentsPage() {
+  const [selectedType, setSelectedType] = useState('');
+  const [submissions] = useState(recentSubmissions);
+
+  const handleTypeSelect = (typeId: string) => {
+    setSelectedType(typeId);
   };
 
-  const handleRemoveFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  const handleStartSubmission = () => {
+    console.log('Start submission:', selectedType);
+    // TODO: Implement document submission
   };
-
-  const handleSubmit = async () => {
-    if (!selectedForm || uploadedFiles.length === 0) {
-      alert('กรุณาเลือกแบบฟอร์มและอัปโหลดเอกสาร');
-      return;
-    }
-
-    setIsSubmitting(true);
-    // Simulate submission
-    setTimeout(() => {
-      setIsSubmitting(false);
-      alert('ยื่นเอกสารเรียบร้อยแล้ว หมายเลขคำขอ: #DOC2024001');
-      setSelectedForm('');
-      setUploadedFiles([]);
-    }, 2000);
-  };
-
-  const selectedFormData = availableForms.find(form => form.id === selectedForm);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <h1 className="text-2xl font-bold text-gray-900">ยื่นเอกสารออนไลน์</h1>
-            <p className="text-gray-600">ยื่นคำขอเอกสารต่างๆ ทางออนไลน์</p>
-          </div>
+      <Header isLoggedIn={true} userType="citizen" />
+      
+      <main className="w-full px-6 lg:px-8 py-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            ยื่นเอกสารออนไลน์
+          </h1>
+          <p className="text-gray-600">
+            ยื่นเอกสารต่างๆ ทางออนไลน์ได้อย่างสะดวกและรวดเร็ว
+          </p>
         </div>
-      </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Form Selection */}
-          <div className="space-y-6">
-            <div className="card">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">เลือกแบบฟอร์ม</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {availableForms.map((form) => (
-                  <button
-                    key={form.id}
-                    onClick={() => setSelectedForm(form.id)}
-                    className={`p-4 border rounded-lg text-left transition-all ${
-                      selectedForm === form.id
-                        ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
-                        : 'border-gray-300 hover:border-gray-400 hover:shadow-md'
-                    }`}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="text-2xl">{form.icon}</div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">{form.name}</h3>
-                        <p className="text-sm text-gray-600 mt-1">{form.description}</p>
-                        <div className="flex items-center mt-2 text-xs text-gray-500">
-                          <ClockIcon className="h-4 w-4 mr-1" />
-                          {form.processingTime}
-                        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Document Types */}
+          <div className="lg:col-span-2">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              เลือกประเภทเอกสารที่ต้องการยื่น
+            </h2>
+            <div className="space-y-4">
+              {documentTypes.map((type, index) => (
+                <motion.div
+                  key={type.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                    selectedType === type.id
+                      ? 'border-primary-500 bg-primary-50'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                  onClick={() => handleTypeSelect(type.id)}
+                >
+                  <div className="flex items-start space-x-4">
+                    <div className={`p-3 rounded-lg ${type.color}`}>
+                      <span className="text-2xl">{type.icon}</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        {type.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-3">
+                        {type.description}
+                      </p>
+                      <div>
+                        <p className="text-xs font-medium text-gray-700 mb-2">
+                          เอกสารที่ต้องเตรียม:
+                        </p>
+                        <ul className="text-xs text-gray-600 space-y-1">
+                          {type.requiredDocs.map((doc, docIndex) => (
+                            <li key={docIndex} className="flex items-center space-x-2">
+                              <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                              <span>{doc}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Required Documents */}
-            {selectedFormData && (
-              <div className="card">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">เอกสารที่ต้องใช้</h3>
-                <ul className="space-y-2">
-                  {selectedFormData.requiredDocs.map((doc, index) => (
-                    <li key={index} className="flex items-center space-x-2">
-                      <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                      <span className="text-gray-700">{doc}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <ClockIcon className="h-5 w-5 text-blue-600" />
-                    <span className="text-sm text-blue-800">
-                      ระยะเวลาดำเนินการ: {selectedFormData.processingTime}
-                    </span>
                   </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* File Upload */}
-          <div className="space-y-6">
-            <div className="card">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">อัปโหลดเอกสาร</h2>
-              
-              {/* Upload Area */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary-400 transition-colors">
-                <DocumentArrowUpIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</p>
-                <input
-                  type="file"
-                  multiple
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="file-upload"
-                />
-                <label
-                  htmlFor="file-upload"
-                  className="btn-primary cursor-pointer"
-                >
-                  <PlusIcon className="h-5 w-5 mr-2" />
-                  เลือกไฟล์
-                </label>
-              </div>
-
-              {/* Uploaded Files */}
-              {uploadedFiles.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">ไฟล์ที่อัปโหลด</h3>
-                  <div className="space-y-2">
-                    {uploadedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <DocumentArrowUpIcon className="h-5 w-5 text-gray-500" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{file.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {(file.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button className="text-gray-400 hover:text-gray-600">
-                            <EyeIcon className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleRemoveFile(index)}
-                            className="text-red-400 hover:text-red-600"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                </motion.div>
+              ))}
             </div>
 
             {/* Submit Button */}
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting || !selectedForm || uploadedFiles.length === 0}
-              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  กำลังยื่นเอกสาร...
-                </>
-              ) : (
-                <>
-                  <ClipboardDocumentListIcon className="h-5 w-5 mr-2" />
-                  ยื่นเอกสาร
-                </>
-              )}
-            </button>
+            {selectedType && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mt-8"
+              >
+                <button
+                  onClick={handleStartSubmission}
+                  className="w-full btn-primary text-lg py-4 flex items-center justify-center space-x-2"
+                >
+                  <ArrowUpTrayIcon className="h-5 w-5" />
+                  <span>เริ่มยื่นเอกสาร</span>
+                </button>
+              </motion.div>
+            )}
           </div>
-        </div>
 
-        {/* Recent Submissions */}
-        <div className="mt-8">
-          <div className="card">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">คำขอที่ยื่นล่าสุด</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <CheckCircleIcon className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">ใบอนุญาตก่อสร้าง</h3>
-                    <p className="text-sm text-gray-600">หมายเลขคำขอ: #DOC2024001</p>
-                  </div>
+          {/* Recent Submissions */}
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              การยื่นเอกสารล่าสุด
+            </h2>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="p-6">
+                <div className="space-y-4">
+                  {submissions.map((submission, index) => (
+                    <motion.div
+                      key={submission.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      className="border-l-4 border-primary-500 pl-4"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-sm font-medium text-gray-900">
+                          {submission.type}
+                        </h3>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${submission.statusColor}`}>
+                          {submission.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mb-3">
+                        {submission.date}
+                      </p>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${submission.progress}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {submission.progress}% เสร็จสิ้น
+                      </p>
+                    </motion.div>
+                  ))}
                 </div>
-                <div className="text-right">
-                  <span className="px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                    อนุมัติแล้ว
-                  </span>
-                  <p className="text-sm text-gray-500 mt-1">15 มกราคม 2567</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <ClockIcon className="h-6 w-6 text-yellow-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">ใบอนุญาตประกอบธุรกิจ</h3>
-                    <p className="text-sm text-gray-600">หมายเลขคำขอ: #DOC2024002</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                    อยู่ระหว่างดำเนินการ
-                  </span>
-                  <p className="text-sm text-gray-500 mt-1">20 มกราคม 2567</p>
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <a
+                    href="#"
+                    className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                  >
+                    ดูประวัติการยื่นเอกสารทั้งหมด →
+                  </a>
                 </div>
               </div>
             </div>
+
+            {/* Quick Tips */}
+            <div className="mt-6 bg-green-50 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-green-900 mb-3">
+                เคล็ดลับการยื่นเอกสาร
+              </h3>
+              <ul className="space-y-2 text-sm text-green-800">
+                <li className="flex items-center space-x-2">
+                  <CheckCircleIcon className="h-4 w-4" />
+                  <span>ตรวจสอบเอกสารให้ครบถ้วนก่อนยื่น</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircleIcon className="h-4 w-4" />
+                  <span>อัปโหลดไฟล์ในรูปแบบ PDF หรือ JPG</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircleIcon className="h-4 w-4" />
+                  <span>ขนาดไฟล์ไม่เกิน 10 MB ต่อไฟล์</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
