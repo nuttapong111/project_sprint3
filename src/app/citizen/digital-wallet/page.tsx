@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
-  PlusIcon,
   EyeIcon,
   ArrowDownTrayIcon,
   DocumentTextIcon,
@@ -13,9 +13,12 @@ import {
   IdentificationIcon,
   TruckIcon,
   GlobeAltIcon,
-  UserIcon
+  UserIcon,
+  ArrowPathIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import Header from '@/components/Header';
+import { mockUsers, User } from '@/lib/mockUsers';
 
 interface Document {
   id: string;
@@ -29,6 +32,7 @@ interface Document {
   status: 'valid' | 'expiring' | 'expired';
   statusText: string;
   statusColor: string;
+  canRenew?: boolean;
 }
 
 const mockDocuments: Document[] = [
@@ -43,7 +47,8 @@ const mockDocuments: Document[] = [
     expiryDate: '01/01/2030',
     status: 'valid',
     statusText: 'ใช้งานได้',
-    statusColor: 'bg-green-100 text-green-800'
+    statusColor: 'bg-green-100 text-green-800',
+    canRenew: true
   },
   {
     id: '2',
@@ -56,7 +61,8 @@ const mockDocuments: Document[] = [
     expiryDate: '15/06/2027',
     status: 'valid',
     statusText: 'ใช้งานได้',
-    statusColor: 'bg-green-100 text-green-800'
+    statusColor: 'bg-green-100 text-green-800',
+    canRenew: true
   },
   {
     id: '3',
@@ -69,7 +75,8 @@ const mockDocuments: Document[] = [
     expiryDate: '10/03/2033',
     status: 'valid',
     statusText: 'ใช้งานได้',
-    statusColor: 'bg-green-100 text-green-800'
+    statusColor: 'bg-green-100 text-green-800',
+    canRenew: true
   },
   {
     id: '4',
@@ -82,7 +89,8 @@ const mockDocuments: Document[] = [
     expiryDate: 'ไม่มีวันหมดอายุ',
     status: 'valid',
     statusText: 'ใช้งานได้',
-    statusColor: 'bg-green-100 text-green-800'
+    statusColor: 'bg-green-100 text-green-800',
+    canRenew: false
   }
 ];
 
@@ -118,11 +126,20 @@ const summaryCards = [
 ];
 
 export default function DigitalWalletPage() {
+  const router = useRouter();
   const [documents] = useState<Document[]>(mockDocuments);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [showCardPopup, setShowCardPopup] = useState(false);
+  
+  // ข้อมูล user ปัจจุบัน (ใช้ user แรกเป็นตัวอย่าง)
+  const currentUser = mockUsers.find(user => user.userType === 'citizen') || mockUsers[0];
 
   const handleViewDocument = (documentId: string) => {
-    console.log('View document:', documentId);
-    // TODO: Implement view document functionality
+    const document = documents.find(doc => doc.id === documentId);
+    if (document) {
+      setSelectedDocument(document);
+      setShowCardPopup(true);
+    }
   };
 
   const handleDownloadDocument = (documentId: string) => {
@@ -130,9 +147,17 @@ export default function DigitalWalletPage() {
     // TODO: Implement download document functionality
   };
 
-  const handleAddDocument = () => {
-    console.log('Add new document');
-    // TODO: Implement add document functionality
+  const handleRenewDocument = (documentId: string) => {
+    const document = mockDocuments.find(doc => doc.id === documentId);
+    if (!document) return;
+    
+    // Navigate to renewal page with document type
+    router.push(`/citizen/renew-document?type=${document.type}&id=${documentId}`);
+  };
+
+  const closeCardPopup = () => {
+    setShowCardPopup(false);
+    setSelectedDocument(null);
   };
 
   return (
@@ -142,7 +167,6 @@ export default function DigitalWalletPage() {
       <main className="w-full px-6 lg:px-8 py-8">
         {/* Header Section */}
         <div className="mb-8">
-          <div className="flex justify-between items-start">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 กระเป๋าเอกสารดิจิทัล
@@ -150,14 +174,6 @@ export default function DigitalWalletPage() {
               <p className="text-gray-600">
                 จัดการเอกสารดิจิทัลของคุณ
               </p>
-            </div>
-            <button
-              onClick={handleAddDocument}
-              className="btn-primary flex items-center space-x-2"
-            >
-              <PlusIcon className="h-5 w-5" />
-              <span>เพิ่มเอกสาร</span>
-            </button>
           </div>
         </div>
 
@@ -235,6 +251,7 @@ export default function DigitalWalletPage() {
               </div>
 
               {/* Action Buttons */}
+              <div className="space-y-3">
               <div className="flex space-x-3">
                 <button
                   onClick={() => handleViewDocument(document.id)}
@@ -250,38 +267,254 @@ export default function DigitalWalletPage() {
                   <ArrowDownTrayIcon className="h-4 w-4" />
                   <span>ดาวน์โหลด</span>
                 </button>
+                </div>
+                {document.canRenew && (
+                  <button
+                    onClick={() => handleRenewDocument(document.id)}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-2 border border-orange-300 rounded-lg text-orange-700 hover:bg-orange-50 transition-colors duration-200"
+                  >
+                    <ArrowPathIcon className="h-4 w-4" />
+                    <span>ต่ออายุบัตร</span>
+                  </button>
+                )}
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Add New Document Section */}
+      </main>
+
+      {/* Card Popup Modal */}
+      {showCardPopup && selectedDocument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="bg-white rounded-lg border-2 border-dashed border-gray-300 p-12 text-center"
-        >
-          <div className="max-w-md mx-auto">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <PlusIcon className="h-8 w-8 text-gray-400" />
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+          >
+            {/* Header */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {selectedDocument.typeThai}
+              </h3>
+              <button
+                onClick={closeCardPopup}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              เพิ่มเอกสารใหม่
-            </h3>
-            <p className="text-gray-600 mb-6">
-              เพิ่มเอกสารดิจิทัลใหม่เข้าสู่กระเป๋าของคุณ
-            </p>
+
+            {/* Card Content */}
+            <div className="p-6">
+              {selectedDocument.type === 'id_card' && (
+                <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-6 text-white">
+                  <div className="text-center mb-6">
+                    <div className="text-sm opacity-80 mb-2">บัตรประจำตัวประชาชน</div>
+                    <div className="text-2xl font-bold">Thai National ID Card</div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <div className="text-sm opacity-80 mb-1">ชื่อ-นามสกุล</div>
+                      <div className="text-lg font-semibold">
+                        {currentUser.firstName} {currentUser.lastName}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm opacity-80 mb-1">เลขประจำตัวประชาชน</div>
+                      <div className="text-lg font-semibold font-mono">
+                        {currentUser.thaiId}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm opacity-80 mb-1">วันเกิด</div>
+                      <div className="text-lg font-semibold">01 มกราคม 2530</div>
+                    </div>
+                    <div>
+                      <div className="text-sm opacity-80 mb-1">ศาสนา</div>
+                      <div className="text-lg font-semibold">พุทธ</div>
+                    </div>
+                    <div className="col-span-2">
+                      <div className="text-sm opacity-80 mb-1">ที่อยู่</div>
+                      <div className="text-lg font-semibold">
+                        123/45 ถนนสุขุมวิท เขตวัฒนา กรุงเทพมหานคร 10110
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-sm opacity-80 mb-1">วันออกบัตร</div>
+                      <div className="text-base font-semibold">{selectedDocument.issueDate}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm opacity-80 mb-1">เจ้าพนักงานออกบัตร</div>
+                      <div className="text-base font-semibold">นายทะเบียน</div>
+                    </div>
+                    <div>
+                      <div className="text-sm opacity-80 mb-1">วันหมดอายุ</div>
+                      <div className="text-base font-semibold">{selectedDocument.expiryDate}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedDocument.type === 'driver_license' && (
+                <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-lg p-6 text-white">
+                  <div className="text-center mb-6">
+                    <div className="text-sm opacity-80 mb-2">ใบอนุญาตขับขี่รถยนต์ส่วนบุคคล</div>
+                    <div className="text-2xl font-bold">Private Car Driving Licence</div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <div className="text-sm opacity-80 mb-1">ชื่อ-นามสกุล</div>
+                      <div className="text-lg font-semibold">
+                        {currentUser.firstName} {currentUser.lastName}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm opacity-80 mb-1">เลขที่บัตรประจำตัว</div>
+                      <div className="text-lg font-semibold font-mono">
+                        {currentUser.thaiId}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm opacity-80 mb-1">เกิดวันที่</div>
+                      <div className="text-lg font-semibold">23 พฤษภาคม 2538</div>
+                    </div>
+                    <div>
+                      <div className="text-sm opacity-80 mb-1">หมายเลขใบอนุญาต</div>
+                      <div className="text-lg font-semibold font-mono">
+                        {selectedDocument.number}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="text-sm opacity-80 mb-1">วันออก</div>
+                      <div className="text-base font-semibold">{selectedDocument.issueDate}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm opacity-80 mb-1">วันหมดอายุ</div>
+                      <div className="text-base font-semibold">{selectedDocument.expiryDate}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedDocument.type === 'passport' && (
+                <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-6 text-white">
+                  <div className="text-center mb-6">
+                    <div className="text-sm opacity-80 mb-2">หนังสือเดินทาง</div>
+                    <div className="text-xs opacity-60">PASSPORT</div>
+                  </div>
+                  
+                  <div className="bg-white bg-opacity-10 rounded-lg p-4 mb-4">
+                    <div className="text-sm opacity-80 mb-1">ชื่อ-นามสกุล</div>
+                    <div className="text-lg font-semibold mb-2">
+                      {currentUser.firstName} {currentUser.lastName}
+                    </div>
+                    <div className="text-sm opacity-80 mb-1">เลขหนังสือเดินทาง</div>
+                    <div className="text-lg font-mono tracking-wider">
+                      {selectedDocument.number}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="opacity-80 mb-1">สัญชาติ</div>
+                      <div className="font-semibold">ไทย</div>
+                    </div>
+                    <div>
+                      <div className="opacity-80 mb-1">เลขประจำตัวประชาชน</div>
+                      <div className="font-semibold">{currentUser.thaiId}</div>
+                    </div>
+                    <div>
+                      <div className="opacity-80 mb-1">วันที่ออก</div>
+                      <div className="font-semibold">{selectedDocument.issueDate}</div>
+                    </div>
+                    <div>
+                      <div className="opacity-80 mb-1">วันหมดอายุ</div>
+                      <div className="font-semibold">{selectedDocument.expiryDate}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 text-center">
+                    <div className="text-xs opacity-60">
+                      กรมการกงสุล กระทรวงการต่างประเทศ
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedDocument.type === 'birth_certificate' && (
+                <div className="bg-gradient-to-br from-yellow-600 to-yellow-800 rounded-lg p-6 text-white">
+                  <div className="text-center mb-6">
+                    <div className="text-sm opacity-80 mb-2">สูติบัตร</div>
+                    <div className="text-xs opacity-60">BIRTH CERTIFICATE</div>
+                  </div>
+                  
+                  <div className="bg-white bg-opacity-10 rounded-lg p-4 mb-4">
+                    <div className="text-sm opacity-80 mb-1">ชื่อ-นามสกุล</div>
+                    <div className="text-lg font-semibold mb-2">
+                      {currentUser.firstName} {currentUser.lastName}
+                    </div>
+                    <div className="text-sm opacity-80 mb-1">เลขสูติบัตร</div>
+                    <div className="text-lg font-mono tracking-wider">
+                      {selectedDocument.number}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="opacity-80 mb-1">วันเกิด</div>
+                      <div className="font-semibold">20 พฤษภาคม 2533</div>
+                    </div>
+                    <div>
+                      <div className="opacity-80 mb-1">เพศ</div>
+                      <div className="font-semibold">ชาย</div>
+                    </div>
+                    <div>
+                      <div className="opacity-80 mb-1">วันที่ออก</div>
+                      <div className="font-semibold">{selectedDocument.issueDate}</div>
+                    </div>
+                    <div>
+                      <div className="opacity-80 mb-1">สถานะ</div>
+                      <div className="font-semibold">ไม่มีวันหมดอายุ</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 text-center">
+                    <div className="text-xs opacity-60">
+                      สำนักงานเขต
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
+              <button
+                onClick={closeCardPopup}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                ปิด
+              </button>
             <button
-              onClick={handleAddDocument}
-              className="btn-primary flex items-center space-x-2 mx-auto"
+                onClick={() => handleDownloadDocument(selectedDocument.id)}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
             >
-              <PlusIcon className="h-5 w-5" />
-              <span>เพิ่มเอกสาร</span>
+                ดาวน์โหลด
             </button>
           </div>
         </motion.div>
-      </main>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,94 @@
+<svg width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#9333ea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="infoGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#fef3c7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fde68a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Card Background -->
+  <rect width="800" height="500" rx="20" ry="20" fill="white" stroke="#d1d5db" stroke-width="2"/>
+  
+  <!-- Header - Blue Section -->
+  <rect x="0" y="0" width="800" height="80" fill="url(#blueGradient)" rx="20" ry="20"/>
+  
+  <!-- Thai Flag -->
+  <rect x="30" y="25" width="40" height="30" fill="white" rx="4"/>
+  <rect x="30" y="25" width="40" height="6" fill="#dc2626"/>
+  <rect x="30" y="31" width="40" height="6" fill="white"/>
+  <rect x="30" y="37" width="40" height="12" fill="#2563eb"/>
+  <rect x="30" y="49" width="40" height="6" fill="white"/>
+  <rect x="30" y="55" width="40" height="6" fill="#dc2626"/>
+  
+  <!-- Thailand Text -->
+  <text x="90" y="45" font-family="Arial" font-size="20" font-weight="bold" fill="white">ประเทศไทย</text>
+  <text x="90" y="65" font-family="Arial" font-size="14" fill="white">Kingdom of Thailand</text>
+  
+  <!-- License Title -->
+  <text x="500" y="45" font-family="Arial" font-size="18" font-weight="bold" fill="white" text-anchor="end">ใบอนุญาตขับขี่รถยนต์ส่วนบุคคล</text>
+  <text x="500" y="65" font-family="Arial" font-size="14" fill="white" text-anchor="end">Private Car Driving Licence</text>
+  
+  <!-- Purple Section -->
+  <rect x="0" y="80" width="800" height="80" fill="url(#purpleGradient)"/>
+  
+  <!-- License Number Left -->
+  <text x="30" y="110" font-family="Arial" font-size="24" font-weight="bold" fill="white">ฉบับที่ 00000000</text>
+  <text x="30" y="135" font-family="Arial" font-size="16" fill="white">วันอนุญาต 1 มีนาคม 2565</text>
+  <text x="30" y="155" font-family="Arial" font-size="12" fill="white">Issue Date 1 March 2022</text>
+  
+  <!-- License Number Right -->
+  <text x="770" y="110" font-family="Arial" font-size="24" font-weight="bold" fill="white" text-anchor="end">No. 00000000</text>
+  <text x="770" y="135" font-family="Arial" font-size="16" fill="white" text-anchor="end">วันสิ้นอายุ 1 มีนาคม 2568</text>
+  <text x="770" y="155" font-family="Arial" font-size="12" fill="white" text-anchor="end">Expire 1 March 2025</text>
+  
+  <!-- Main Content Area -->
+  <rect x="0" y="160" width="800" height="280" fill="white"/>
+  
+  <!-- Left Side - Emblem and Photo -->
+  <g transform="translate(30, 180)">
+    <!-- Garuda Emblem -->
+    <rect x="0" y="0" width="80" height="80" fill="#fbbf24" stroke="#f59e0b" stroke-width="3" rx="8"/>
+    <g transform="translate(40, 40)">
+      <path d="M0 -20L8 0L20 4L8 8L0 20L-8 8L-20 4L-8 0Z" fill="#f59e0b"/>
+      <path d="M-12 -8L-6 0L0 -4L-6 -8L-12 -4L-18 -8L-12 -8Z" fill="#f59e0b"/>
+      <path d="M12 -8L6 0L0 -4L6 -8L12 -4L18 -8L12 -8Z" fill="#f59e0b"/>
+      <circle cx="0" cy="0" r="6" fill="#f59e0b"/>
+      <path d="M-6 -8L0 -12L6 -8L0 -4L-6 -8Z" fill="#f59e0b"/>
+    </g>
+    
+    <!-- Driver Photo -->
+    <rect x="0" y="100" width="100" height="140" fill="#f3f4f6" stroke="#9ca3af" stroke-width="2" rx="8"/>
+    <rect x="20" y="120" width="60" height="80" fill="#d1d5db" rx="4"/>
+    <text x="50" y="220" font-family="Arial" font-size="12" fill="#6b7280" text-anchor="middle">Photo</text>
+  </g>
+  
+  <!-- Right Side - Personal Info -->
+  <rect x="150" y="180" width="600" height="140" fill="url(#infoGradient)" stroke="#f59e0b" stroke-width="1" rx="8"/>
+  
+  <!-- Name Section -->
+  <text x="170" y="210" font-family="Arial" font-size="16" font-weight="bold" fill="#dc2626">ชื่อ / Name</text>
+  <text x="170" y="235" font-family="Arial" font-size="20" font-weight="bold" fill="#374151">XXX XXXXXXXX</text>
+  <text x="170" y="255" font-family="Arial" font-size="16" fill="#6b7280">XXXXXXXXX</text>
+  
+  <!-- Birth Date Section -->
+  <text x="170" y="285" font-family="Arial" font-size="16" font-weight="bold" fill="#dc2626">เกิดวันที่ / Birth Date</text>
+  <text x="170" y="310" font-family="Arial" font-size="18" font-weight="bold" fill="#374151">23 พฤษภาคม 2538</text>
+  <text x="170" y="330" font-family="Arial" font-size="16" fill="#6b7280">23 May 1995</text>
+  
+  <!-- ID Number Section -->
+  <text x="450" y="210" font-family="Arial" font-size="16" font-weight="bold" fill="#374151">เลขที่บัตรประจำตัว / ID No.</text>
+  <text x="450" y="235" font-family="monospace" font-size="20" font-weight="bold" fill="#374151">0 0000 00000 00 0</text>
+  
+  <!-- Footer -->
+  <rect x="0" y="440" width="800" height="60" fill="#1e40af"/>
+  <text x="400" y="480" font-family="Arial" font-size="16" font-weight="bold" fill="white" text-anchor="middle">นายทะเบียนจังหวัด กรุงเทพมหานคร Bangkok</text>
+</svg>
