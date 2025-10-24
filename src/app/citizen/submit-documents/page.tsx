@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   ClipboardDocumentListIcon,
@@ -13,6 +13,8 @@ import {
   ArrowUpTrayIcon
 } from '@heroicons/react/24/outline';
 import Header from '@/components/Header';
+import Link from 'next/link';
+import { DocumentSubmissionManager, DocumentSubmission } from '@/lib/documentSubmission';
 
 const documentTypes = [
   {
@@ -86,16 +88,34 @@ const recentSubmissions = [
 
 export default function SubmitDocumentsPage() {
   const [selectedType, setSelectedType] = useState('');
-  const [submissions] = useState(recentSubmissions);
+  const [recentSubmissions, setRecentSubmissions] = useState<DocumentSubmission[]>([]);
+
+  useEffect(() => {
+    loadRecentSubmissions();
+  }, []);
+
+  const loadRecentSubmissions = () => {
+    const submissions = DocumentSubmissionManager.getRecentSubmissions('current_user', 3);
+    setRecentSubmissions(submissions);
+  };
 
   const handleTypeSelect = (typeId: string) => {
     setSelectedType(typeId);
   };
 
-  const handleStartSubmission = () => {
-    console.log('Start submission:', selectedType);
-    // TODO: Implement document submission
+  const handleViewSubmission = (submission: DocumentSubmission) => {
+    // นำไปยังหน้าประวัติการยื่นเอกสาร
+    window.location.href = '/citizen/document-history';
   };
+
+  const getStatusColor = (status: string) => {
+    return DocumentSubmissionManager.getStatusColor(status as any);
+  };
+
+  const getStatusText = (status: string) => {
+    return DocumentSubmissionManager.getStatusText(status as any);
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -170,13 +190,13 @@ export default function SubmitDocumentsPage() {
                 transition={{ duration: 0.3 }}
                 className="mt-8"
               >
-                <button
-                  onClick={handleStartSubmission}
+                <Link
+                  href="/citizen/submit-documents/start"
                   className="w-full btn-primary text-lg py-4 flex items-center justify-center space-x-2"
                 >
                   <ArrowUpTrayIcon className="h-5 w-5" />
                   <span>เริ่มยื่นเอกสาร</span>
-                </button>
+                </Link>
               </motion.div>
             )}
           </div>
@@ -189,24 +209,25 @@ export default function SubmitDocumentsPage() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="p-6">
                 <div className="space-y-4">
-                  {submissions.map((submission, index) => (
+                  {recentSubmissions.map((submission, index) => (
                     <motion.div
                       key={submission.id}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.5, delay: index * 0.1 }}
-                      className="border-l-4 border-primary-500 pl-4"
+                      className="border-l-4 border-primary-500 pl-4 cursor-pointer hover:bg-gray-50 p-2 rounded-lg"
+                      onClick={() => handleViewSubmission(submission)}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <h3 className="text-sm font-medium text-gray-900">
-                          {submission.type}
+                          {submission.documentTypeName}
                         </h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${submission.statusColor}`}>
-                          {submission.status}
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(submission.status)}`}>
+                          {getStatusText(submission.status)}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 mb-3">
-                        {submission.date}
+                        {submission.submittedAt.toLocaleDateString('th-TH')}
                       </p>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
@@ -221,12 +242,12 @@ export default function SubmitDocumentsPage() {
                   ))}
                 </div>
                 <div className="mt-6 pt-4 border-t border-gray-200">
-                  <a
-                    href="#"
+                  <Link
+                    href="/citizen/document-history"
                     className="text-sm text-primary-600 hover:text-primary-700 font-medium"
                   >
                     ดูประวัติการยื่นเอกสารทั้งหมด →
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>

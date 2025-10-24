@@ -57,25 +57,28 @@ const recentReports = [
     id: '1',
     type: 'การทุจริต',
     title: 'การทุจริตในหน่วยงานราชการ',
-    date: '15/12/2024',
-    status: 'กำลังดำเนินการ',
-    statusColor: 'bg-blue-100 text-blue-800'
+    date: '20/10/2024',
+    status: 'อนุมัติแล้ว',
+    statusColor: 'bg-green-100 text-green-800',
+    href: '/citizen/reports-history'
   },
   {
     id: '2',
-    type: 'การลักทรัพย์',
-    title: 'ขโมยรถจักรยานยนต์',
-    date: '10/12/2024',
-    status: 'เสร็จสิ้น',
-    statusColor: 'bg-green-100 text-green-800'
+    type: 'การใช้ความรุนแรง',
+    title: 'การทำร้ายร่างกาย',
+    date: '15/10/2024',
+    status: 'อนุมัติแล้ว',
+    statusColor: 'bg-green-100 text-green-800',
+    href: '/citizen/reports-history'
   },
   {
     id: '3',
-    type: 'อาชญากรรมไซเบอร์',
-    title: 'การหลอกลวงทางออนไลน์',
-    date: '05/12/2024',
-    status: 'รอดำเนินการ',
-    statusColor: 'bg-yellow-100 text-yellow-800'
+    type: 'การลักทรัพย์',
+    title: 'ขโมยโทรศัพท์มือถือ',
+    date: '24/10/2024',
+    status: 'รอการตรวจสอบ',
+    statusColor: 'bg-yellow-100 text-yellow-800',
+    href: '/citizen/reports-history'
   }
 ];
 
@@ -88,8 +91,10 @@ export default function ReportCrimePage() {
   };
 
   const handleSubmitReport = () => {
-    console.log('Submit report:', selectedType);
-    // TODO: Implement report submission
+    if (selectedType) {
+      // Redirect to AI Chat page with crime type
+      window.location.href = `/citizen/report-crime/ai-chat?type=${selectedType}`;
+    }
   };
 
   return (
@@ -100,10 +105,10 @@ export default function ReportCrimePage() {
         {/* Header Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            แจ้งความออนไลน์
+            บันทึกประจำวันออนไลน์
           </h1>
           <p className="text-gray-600">
-            แจ้งความผ่านระบบออนไลน์อย่างปลอดภัยและรวดเร็ว
+            บันทึกประจำวันผ่านระบบออนไลน์อย่างปลอดภัยและรวดเร็ว
           </p>
         </div>
 
@@ -111,7 +116,7 @@ export default function ReportCrimePage() {
           {/* Report Types */}
           <div className="lg:col-span-2">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              เลือกประเภทการแจ้งความ
+              เลือกประเภทการบันทึกประจำวัน
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {reportTypes.map((type, index) => (
@@ -156,7 +161,7 @@ export default function ReportCrimePage() {
                   onClick={handleSubmitReport}
                   className="w-full btn-primary text-lg py-4"
                 >
-                  เริ่มแจ้งความ
+                  เริ่มบันทึกประจำวัน
                 </button>
               </motion.div>
             )}
@@ -165,7 +170,7 @@ export default function ReportCrimePage() {
           {/* Recent Reports */}
           <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              การแจ้งความล่าสุด
+              บันทึกประจำวันล่าสุด
             </h2>
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="p-6">
@@ -178,28 +183,33 @@ export default function ReportCrimePage() {
                       transition={{ duration: 0.5, delay: index * 0.1 }}
                       className="border-l-4 border-primary-500 pl-4"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="text-sm font-medium text-gray-900 mb-1">
-                            {report.title}
-                          </h3>
-                          <p className="text-xs text-gray-500 mb-2">
-                            {report.type} • {report.date}
-                          </p>
-                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${report.statusColor}`}>
-                            {report.status}
-                          </span>
+                      <a
+                        href={report.href}
+                        className="block hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="text-sm font-medium text-gray-900 mb-1">
+                              {report.title}
+                            </h3>
+                            <p className="text-xs text-gray-500 mb-2">
+                              {report.type} • {report.date}
+                            </p>
+                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${report.statusColor}`}>
+                              {report.status}
+                            </span>
+                          </div>
                         </div>
-                      </div>
+                      </a>
                     </motion.div>
                   ))}
                 </div>
                 <div className="mt-6 pt-4 border-t border-gray-200">
                   <a
-                    href="#"
+                    href="/citizen/reports-history"
                     className="text-sm text-primary-600 hover:text-primary-700 font-medium"
                   >
-                    ดูประวัติการแจ้งความทั้งหมด →
+                    ดูประวัติการบันทึกประจำวันทั้งหมด →
                   </a>
                 </div>
               </div>

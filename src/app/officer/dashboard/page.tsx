@@ -1,185 +1,385 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { 
-  HomeIcon,
-  ClipboardDocumentListIcon,
+  ChartBarIcon,
+  UsersIcon,
   DocumentTextIcon,
   ExclamationTriangleIcon,
-  BellIcon,
-  CogIcon,
-  ChartBarIcon,
-  ClockIcon,
+  ClipboardDocumentListIcon,
+  HeartIcon,
+  EyeIcon,
   CheckCircleIcon,
-  ExclamationCircleIcon,
-  UserGroupIcon
+  XCircleIcon,
+  ClockIcon,
+  CalendarIcon,
+  UserGroupIcon,
+  BuildingOfficeIcon
 } from '@heroicons/react/24/outline';
-import Link from 'next/link';
 import Header from '@/components/Header';
+import Link from 'next/link';
+import { DocumentSubmissionManager } from '@/lib/documentSubmission';
+import { ReportStatusManager } from '@/lib/reportStatus';
 
-export default function OfficerDashboard() {
-  const [user] = useState({
-    name: 'นางสาว รัฐบาล',
-    thaiId: '4567890123456',
-    userType: 'officer',
-    department: 'กรมการปกครอง',
-    position: 'เจ้าหน้าที่ทะเบียน'
+interface OfficerStats {
+  totalReports: number;
+  totalSubmissions: number;
+  pendingReports: number;
+  pendingSubmissions: number;
+  approvedReports: number;
+  approvedSubmissions: number;
+  rejectedReports: number;
+  rejectedSubmissions: number;
+  todayReports: number;
+  todaySubmissions: number;
+}
+
+export default function OfficerDashboardPage() {
+  const [stats, setStats] = useState<OfficerStats>({
+    totalReports: 0,
+    totalSubmissions: 0,
+    pendingReports: 0,
+    pendingSubmissions: 0,
+    approvedReports: 0,
+    approvedSubmissions: 0,
+    rejectedReports: 0,
+    rejectedSubmissions: 0,
+    todayReports: 0,
+    todaySubmissions: 0
   });
 
-  const quickActions = [
-    { name: 'จัดการคำขอ', href: '/officer/requests', icon: ClipboardDocumentListIcon, color: 'blue' },
-    { name: 'ตรวจสอบเอกสาร', href: '/officer/documents', icon: DocumentTextIcon, color: 'green' },
-    { name: 'รายงาน', href: '/officer/reports', icon: ExclamationTriangleIcon, color: 'red' },
-    { name: 'การแจ้งเตือน', href: '/officer/notifications', icon: BellIcon, color: 'purple' },
-  ];
+  useEffect(() => {
+    loadStats();
+  }, []);
 
-  const recentRequests = [
-    { id: 1, type: 'success', title: 'คำขอใบอนุญาตขับขี่', time: '2 ชั่วโมงที่แล้ว', status: 'อนุมัติแล้ว', citizen: 'สมชาย ใจดี' },
-    { id: 2, type: 'pending', title: 'คำขอใบอนุญาตก่อสร้าง', time: '1 วันที่แล้ว', status: 'รอการตรวจสอบ', citizen: 'สมหญิง รักดี' },
-    { id: 3, type: 'warning', title: 'คำขอสูติบัตร', time: '3 วันที่แล้ว', status: 'ต้องแก้ไข', citizen: 'วิชัย สมบูรณ์' },
-  ];
-
-  const stats = [
-    { name: 'คำขอทั้งหมด', value: '45', change: '+8', changeType: 'positive' },
-    { name: 'รอดำเนินการ', value: '12', change: '-3', changeType: 'negative' },
-    { name: 'อนุมัติแล้ว', value: '28', change: '+5', changeType: 'positive' },
-    { name: 'ปฏิเสธ', value: '5', change: '+1', changeType: 'positive' },
-  ];
-
-  const getStatusIcon = (type: string) => {
-    switch (type) {
-      case 'success': return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
-      case 'pending': return <ClockIcon className="h-5 w-5 text-yellow-500" />;
-      case 'warning': return <ExclamationCircleIcon className="h-5 w-5 text-red-500" />;
-      default: return <CheckCircleIcon className="h-5 w-5 text-blue-500" />;
-    }
+  const loadStats = () => {
+    const allReports = ReportStatusManager.getAllReports();
+    const allSubmissions = DocumentSubmissionManager.getAllSubmissions();
+    
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    setStats({
+      totalReports: allReports.length,
+      totalSubmissions: allSubmissions.length,
+      pendingReports: allReports.filter(r => r.status === 'pending').length,
+      pendingSubmissions: allSubmissions.filter(s => s.status === 'pending').length,
+      approvedReports: allReports.filter(r => r.status === 'approved').length,
+      approvedSubmissions: allSubmissions.filter(s => s.status === 'approved').length,
+      rejectedReports: allReports.filter(r => r.status === 'rejected').length,
+      rejectedSubmissions: allSubmissions.filter(s => s.status === 'rejected').length,
+      todayReports: allReports.filter(r => r.submittedAt >= todayStart).length,
+      todaySubmissions: allSubmissions.filter(s => s.submittedAt >= todayStart).length
+    });
   };
 
-  const getStatusColor = (type: string) => {
-    switch (type) {
-      case 'success': return 'text-green-600 bg-green-100';
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
-      case 'warning': return 'text-red-600 bg-red-100';
-      default: return 'text-blue-600 bg-blue-100';
+  const statCards = [
+    {
+      title: 'บันทึกประจำวันวันนี้',
+      value: stats.todayReports,
+      icon: ExclamationTriangleIcon,
+      color: 'bg-red-500',
+      href: '/officer/reports',
+      description: 'รายการใหม่ที่ต้องตรวจสอบ'
+    },
+    {
+      title: 'การยื่นเอกสารวันนี้',
+      value: stats.todaySubmissions,
+      icon: ClipboardDocumentListIcon,
+      color: 'bg-green-500',
+      href: '/officer/document-review',
+      description: 'เอกสารใหม่ที่ต้องตรวจสอบ'
+    },
+    {
+      title: 'รอตรวจสอบทั้งหมด',
+      value: stats.pendingReports + stats.pendingSubmissions,
+      icon: ClockIcon,
+      color: 'bg-yellow-500',
+      href: '#',
+      description: 'รายการที่รอการตรวจสอบ'
+    },
+    {
+      title: 'อนุมัติแล้วทั้งหมด',
+      value: stats.approvedReports + stats.approvedSubmissions,
+      icon: CheckCircleIcon,
+      color: 'bg-blue-500',
+      href: '#',
+      description: 'รายการที่อนุมัติแล้ว'
     }
-  };
+  ];
+
+  const recentActivities = [
+    {
+      id: '1',
+      type: 'report',
+      title: 'บันทึกประจำวันใหม่',
+      description: 'การลักทรัพย์ - สมชาย ใจดี',
+      time: '2 นาทีที่แล้ว',
+      status: 'pending',
+      icon: ExclamationTriangleIcon,
+      color: 'text-yellow-600',
+      href: '/officer/reports'
+    },
+    {
+      id: '2',
+      type: 'submission',
+      title: 'การยื่นเอกสารใหม่',
+      description: 'ใบอนุญาตก่อสร้าง - สมหญิง รักดี',
+      time: '5 นาทีที่แล้ว',
+      status: 'pending',
+      icon: ClipboardDocumentListIcon,
+      color: 'text-blue-600',
+      href: '/officer/document-review'
+    },
+    {
+      id: '3',
+      type: 'report',
+      title: 'อนุมัติบันทึกประจำวัน',
+      description: 'การทุจริต - อนุมัติแล้ว',
+      time: '10 นาทีที่แล้ว',
+      status: 'approved',
+      icon: CheckCircleIcon,
+      color: 'text-green-600',
+      href: '/officer/reports'
+    },
+    {
+      id: '4',
+      type: 'submission',
+      title: 'อนุมัติการยื่นเอกสาร',
+      description: 'ใบขับขี่ - อนุมัติแล้ว',
+      time: '15 นาทีที่แล้ว',
+      status: 'approved',
+      icon: CheckCircleIcon,
+      color: 'text-green-600',
+      href: '/officer/document-review'
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header isLoggedIn={true} userType="officer" />
       
-      {/* Page Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard เจ้าหน้าที่</h1>
-            <p className="text-gray-600">ยินดีต้อนรับ {user.name} - {user.position}</p>
-            <p className="text-sm text-gray-500">{user.department}</p>
+      <div className="container mx-auto px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-7xl mx-auto"
+        >
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              แดชบอร์ดเจ้าหน้าที่
+            </h1>
+            <p className="text-gray-600">
+              ภาพรวมงานที่ต้องตรวจสอบและอนุมัติ
+            </p>
           </div>
-        </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat) => (
-            <div key={stat.name} className="card">
-              <div className="flex items-center justify-between">
+          {/* สถิติหลัก */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {statCards.map((card, index) => (
+              <motion.div
+                key={card.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 rounded-full ${card.color}`}>
+                    <card.icon className="h-6 w-6 text-white" />
+        </div>
+                  <Link
+                    href={card.href}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <EyeIcon className="h-5 w-5" />
+                  </Link>
+      </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-sm font-medium text-gray-600">{card.title}</p>
+                  <p className="text-2xl font-bold text-gray-900">{card.value}</p>
+                  <p className="text-sm text-gray-500">{card.description}</p>
                 </div>
-                <div className={`text-sm font-medium ${
-                  stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {stat.change}
-                </div>
-              </div>
-            </div>
+              </motion.div>
           ))}
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Quick Actions */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* กิจกรรมล่าสุด */}
           <div className="lg:col-span-2">
-            <div className="card">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">งานที่ต้องทำ</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {quickActions.map((action) => {
-                  const IconComponent = action.icon;
-                  return (
-                    <Link
-                      key={action.name}
-                      href={action.href}
-                      className="group p-6 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all duration-200"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div className={`w-12 h-12 bg-${action.color}-100 rounded-lg flex items-center justify-center group-hover:bg-${action.color}-200 transition-colors`}>
-                          <IconComponent className={`h-6 w-6 text-${action.color}-600`} />
+              <div className="bg-white rounded-lg shadow">
+                <div className="p-6 border-b border-gray-200">
+                  <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                    <ClockIcon className="h-5 w-5 mr-2 text-gray-600" />
+                    กิจกรรมล่าสุด
+                  </h2>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-4">
+                    {recentActivities.map((activity, index) => (
+                      <motion.div
+                        key={activity.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                        className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg"
+                      >
+                        <div className={`p-2 rounded-full bg-gray-100`}>
+                          <activity.icon className={`h-4 w-4 ${activity.color}`} />
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-                            {action.name}
-                          </h3>
-                          <p className="text-sm text-gray-600">คลิกเพื่อเข้าสู่งาน</p>
+                        <div className="flex-1 min-w-0">
+                    <Link
+                            href={activity.href}
+                            className="text-sm font-medium text-gray-900 hover:text-blue-600"
+                          >
+                            {activity.title}
+                          </Link>
+                          <p className="text-sm text-gray-600">{activity.description}</p>
+                          <p className="text-xs text-gray-500">{activity.time}</p>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            activity.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            activity.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {activity.status === 'pending' ? 'รอตรวจสอบ' :
+                             activity.status === 'approved' ? 'อนุมัติแล้ว' :
+                             'ไม่ทราบสถานะ'}
+                          </span>
+                        </div>
+                      </motion.div>
+                    ))}
                         </div>
                       </div>
-                    </Link>
-                  );
-                })}
+              </div>
+            </div>
+
+            {/* สถิติรายละเอียด */}
+            <div className="space-y-6">
+              {/* สถิติบันทึกประจำวัน */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <ExclamationTriangleIcon className="h-5 w-5 mr-2 text-red-600" />
+                  บันทึกประจำวัน
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">รอตรวจสอบ</span>
+                    <span className="font-semibold text-yellow-600">{stats.pendingReports}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">อนุมัติแล้ว</span>
+                    <span className="font-semibold text-green-600">{stats.approvedReports}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">ปฏิเสธ</span>
+                    <span className="font-semibold text-red-600">{stats.rejectedReports}</span>
+            </div>
+          </div>
+                <div className="mt-4">
+                  <Link
+                    href="/officer/reports"
+                    className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 text-center block"
+                  >
+                    ตรวจสอบบันทึกประจำวัน
+              </Link>
+            </div>
+              </div>
+
+              {/* สถิติการยื่นเอกสาร */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <ClipboardDocumentListIcon className="h-5 w-5 mr-2 text-green-600" />
+                  การยื่นเอกสาร
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">รอตรวจสอบ</span>
+                    <span className="font-semibold text-yellow-600">{stats.pendingSubmissions}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">อนุมัติแล้ว</span>
+                    <span className="font-semibold text-green-600">{stats.approvedSubmissions}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">ปฏิเสธ</span>
+                    <span className="font-semibold text-red-600">{stats.rejectedSubmissions}</span>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <Link
+                    href="/officer/document-review"
+                    className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 text-center block"
+                  >
+                    ตรวจสอบการยื่นเอกสาร
+                  </Link>
+          </div>
+        </div>
+
+              {/* เครื่องมือด่วน */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <BuildingOfficeIcon className="h-5 w-5 mr-2 text-blue-600" />
+                  เครื่องมือด่วน
+                </h3>
+                <div className="space-y-3">
+                  <Link
+                    href="/officer/reports"
+                    className="w-full text-left p-3 hover:bg-gray-50 rounded-lg border border-gray-200 block"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
+                      <div>
+                        <p className="font-medium text-gray-900">ตรวจสอบบันทึกประจำวัน</p>
+                        <p className="text-sm text-gray-600">ดูและอนุมัติบันทึกประจำวัน</p>
+                      </div>
+                    </div>
+                  </Link>
+                  <Link
+                    href="/officer/document-review"
+                    className="w-full text-left p-3 hover:bg-gray-50 rounded-lg border border-gray-200 block"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <ClipboardDocumentListIcon className="h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="font-medium text-gray-900">ตรวจสอบการยื่นเอกสาร</p>
+                        <p className="text-sm text-gray-600">ดูและอนุมัติการยื่นเอกสาร</p>
+                      </div>
+                    </div>
+                  </Link>
+                  <Link
+                    href="/officer/digital-wallet"
+                    className="w-full text-left p-3 hover:bg-gray-50 rounded-lg border border-gray-200 block"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <DocumentTextIcon className="h-5 w-5 text-purple-600" />
+                    <div>
+                        <p className="font-medium text-gray-900">จัดการกระเป๋าเอกสาร</p>
+                        <p className="text-sm text-gray-600">เพิ่มเอกสารให้ประชาชน</p>
+                      </div>
+                    </div>
+                  </Link>
+                  <Link
+                    href="/officer/requests"
+                    className="w-full text-left p-3 hover:bg-gray-50 rounded-lg border border-gray-200 block"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <UserGroupIcon className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <p className="font-medium text-gray-900">จัดการคำขอ</p>
+                        <p className="text-sm text-gray-600">จัดการคำขออื่นๆ</p>
+                    </div>
+                  </div>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
-
-          {/* Recent Requests */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">คำขอล่าสุด</h2>
-              <Link href="/officer/requests" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
-                ดูทั้งหมด
-              </Link>
-            </div>
-            <div className="space-y-4">
-              {recentRequests.map((request) => (
-                <div key={request.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                  {getStatusIcon(request.type)}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{request.title}</p>
-                    <p className="text-sm text-gray-600 mt-1">ผู้ขอ: {request.citizen}</p>
-                    <p className="text-xs text-gray-500 mt-1">{request.time}</p>
-                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-2 ${getStatusColor(request.type)}`}>
-                      {request.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activities */}
-        <div className="mt-8">
-          <div className="card">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">กิจกรรมล่าสุด</h2>
-            <div className="space-y-4">
-              {recentRequests.map((request) => (
-                <div key={request.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    {getStatusIcon(request.type)}
-                    <div>
-                      <h3 className="font-medium text-gray-900">{request.title}</h3>
-                      <p className="text-sm text-gray-600">ผู้ขอ: {request.citizen}</p>
-                      <p className="text-sm text-gray-600">{request.time}</p>
-                    </div>
-                  </div>
-                  <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(request.type)}`}>
-                    {request.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

@@ -20,6 +20,8 @@ import {
   ChevronDownIcon
 } from '@heroicons/react/24/outline';
 import NotificationPopup from './NotificationPopup';
+import { UserContext } from '@/lib/userContext';
+import { mockUsers } from '@/lib/mockUsers';
 
 interface HeaderProps {
   isLoggedIn?: boolean;
@@ -34,6 +36,17 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
   const [isLargeText, setIsLargeText] = useState(false);
   const [isVoiceControl, setIsVoiceControl] = useState(false);
 
+  // ตั้งค่าผู้ใช้ปัจจุบันเมื่อ component โหลด
+  useEffect(() => {
+    if (isLoggedIn && !UserContext.getCurrentUser()) {
+      // ใช้ผู้ใช้ตัวอย่างสำหรับการทดสอบ
+      const sampleUser = mockUsers.find(user => user.userType === userType);
+      if (sampleUser) {
+        UserContext.setCurrentUser(sampleUser);
+      }
+    }
+  }, [isLoggedIn, userType]);
+
   const navigation = [
     { name: 'หน้าหลัก', href: '#home' },
     { name: 'บริการ', href: '#services' },
@@ -44,16 +57,19 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
   const citizenMenu = [
     { name: 'Dashboard', href: '/citizen/dashboard', icon: HomeIcon },
     { name: 'กระเป๋าเอกสารดิจิทัล', href: '/citizen/digital-wallet', icon: DocumentTextIcon },
-    { name: 'แจ้งความออนไลน์', href: '/citizen/report-crime', icon: ExclamationTriangleIcon },
+    { name: 'บันทึกประจำวัน', href: '/citizen/report-crime', icon: ExclamationTriangleIcon },
+    { name: 'ประวัติการบันทึก', href: '/citizen/reports-history', icon: DocumentTextIcon },
     { name: 'ยื่นเอกสารออนไลน์', href: '/citizen/submit-documents', icon: ClipboardDocumentListIcon },
+    { name: 'ประวัติการยื่นเอกสาร', href: '/citizen/document-history', icon: DocumentTextIcon },
     { name: 'พบแพทย์', href: '/citizen/medical-appointment', icon: HeartIcon },
   ];
 
   const officerMenu = [
     { name: 'Dashboard', href: '/officer/dashboard', icon: HomeIcon },
+    { name: 'ตรวจสอบบันทึกประจำวัน', href: '/officer/reports', icon: ExclamationTriangleIcon },
+    { name: 'ตรวจสอบการยื่นเอกสาร', href: '/officer/document-review', icon: ClipboardDocumentListIcon },
+    { name: 'จัดการกระเป๋าเอกสาร', href: '/officer/digital-wallet', icon: DocumentTextIcon },
     { name: 'จัดการคำขอ', href: '/officer/requests', icon: ClipboardDocumentListIcon },
-    { name: 'ตรวจสอบเอกสาร', href: '/officer/documents', icon: DocumentTextIcon },
-    { name: 'รายงาน', href: '/officer/reports', icon: ExclamationTriangleIcon },
   ];
 
   const adminMenu = [
@@ -292,10 +308,15 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
             </div>
 
             {!isLoggedIn ? (
-              <a href="/login" className="btn-primary">
-                <UserIcon className="h-5 w-5 mr-2" />
-                เข้าสู่ระบบ
-              </a>
+              <div className="flex items-center space-x-3">
+                <a href="/register" className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors duration-200">
+                  สมัครสมาชิก
+                </a>
+                <a href="/login" className="btn-primary">
+                  <UserIcon className="h-5 w-5 mr-2" />
+                  เข้าสู่ระบบ
+                </a>
+              </div>
             ) : (
               <div className="flex items-center space-x-4">
                 {/* Notifications */}
@@ -385,7 +406,10 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
                       {item.name}
                     </button>
                   ))}
-                  <div className="pt-4 border-t border-gray-200">
+                  <div className="pt-4 border-t border-gray-200 space-y-2">
+                    <a href="/register" className="w-full block text-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                      สมัครสมาชิก
+                    </a>
                     <a href="/login" className="w-full btn-primary">
                       <UserIcon className="h-5 w-5 mr-2" />
                       เข้าสู่ระบบ
