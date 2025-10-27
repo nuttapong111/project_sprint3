@@ -36,6 +36,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/documents', require('./routes/documents'));
+app.use('/api/digital-documents', require('./routes/digitalDocuments'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

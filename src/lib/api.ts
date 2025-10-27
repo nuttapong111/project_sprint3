@@ -1,6 +1,6 @@
 // API Service for connecting to backend
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 class ApiService {
   private baseURL: string;
@@ -305,6 +305,87 @@ class ApiService {
       message: string;
       timestamp: string;
     }>('/health');
+  }
+
+  // Digital Documents methods
+  async getDigitalDocuments() {
+    return this.request<any[]>('/digital-documents');
+  }
+
+  async getDigitalDocument(id: number) {
+    return this.request<any>(`/digital-documents/${id}`);
+  }
+
+  async createDigitalDocument(documentData: {
+    userId: number;
+    documentType: string;
+    documentName: string;
+    documentNumber: string;
+    issueDate: string;
+    expiryDate: string | null;
+    status?: string;
+    issuedBy: string;
+    officerNotes?: string;
+    fileUrl?: string;
+  }) {
+    return this.request<{
+      message: string;
+      document: any;
+    }>('/digital-documents', {
+      method: 'POST',
+      body: JSON.stringify(documentData),
+    });
+  }
+
+  async updateDigitalDocument(id: number, updates: any) {
+    return this.request<{
+      message: string;
+      document: any;
+    }>(`/digital-documents/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  // Notifications methods
+  async getNotifications(isRead?: boolean) {
+    const params = new URLSearchParams();
+    if (isRead !== undefined) params.append('isRead', isRead.toString());
+
+    const queryString = params.toString();
+    const endpoint = queryString ? `/notifications?${queryString}` : '/notifications';
+    
+    return this.request<any[]>(endpoint);
+  }
+
+  async getUnreadCount() {
+    return this.request<{ count: number }>('/notifications/unread-count');
+  }
+
+  async markNotificationAsRead(id: number) {
+    return this.request<{
+      message: string;
+      notification: any;
+    }>(`/notifications/${id}/read`, {
+      method: 'PATCH',
+    });
+  }
+
+  async markAllNotificationsAsRead() {
+    return this.request<{
+      message: string;
+      count: number;
+    }>('/notifications/mark-all-read', {
+      method: 'PATCH',
+    });
+  }
+
+  async deleteNotification(id: number) {
+    return this.request<{
+      message: string;
+    }>(`/notifications/${id}`, {
+      method: 'DELETE',
+    });
   }
 }
 
