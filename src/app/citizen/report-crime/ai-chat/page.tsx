@@ -124,6 +124,7 @@ export default function AIChatPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   // Initialize chat with report type
   useEffect(() => {
@@ -214,21 +215,72 @@ export default function AIChatPage() {
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      audioChunksRef.current = [];
+      // Check if Web Speech API is available
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      
+      if (SpeechRecognition) {
+        // Use Web Speech API for real-time transcription
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'th-TH'; // Thai language
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        
+        let finalTranscript = '';
+        
+        recognition.onresult = (event: any) => {
+          let interimTranscript = '';
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript + ' ';
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+          
+          // Show interim results in UI (optional)
+          if (interimTranscript && isRecording) {
+            console.log('Interim:', interimTranscript);
+          }
+        };
+        
+        recognition.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+          if (event.error === 'no-speech') {
+            alert('ไม่ได้ยินเสียง กรุณาลองใหม่อีกครั้ง');
+          }
+          setIsRecording(false);
+        };
+        
+        recognition.onend = () => {
+          setIsRecording(false);
+          if (finalTranscript.trim()) {
+            addUserMessage(finalTranscript.trim(), true, true);
+          }
+        };
+        
+        recognitionRef.current = recognition;
+        recognition.start();
+        setIsRecording(true);
+      } else {
+        // Fallback: Use MediaRecorder if Web Speech API not available
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorderRef.current = new MediaRecorder(stream);
+        audioChunksRef.current = [];
 
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
+        mediaRecorderRef.current.ondataavailable = (event) => {
+          audioChunksRef.current.push(event.data);
+        };
 
-      mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        processAudio(audioBlob);
-      };
+        mediaRecorderRef.current.onstop = () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+          processAudio(audioBlob);
+        };
 
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
+        mediaRecorderRef.current.start();
+        setIsRecording(true);
+      }
     } catch (error) {
       console.error('Error accessing microphone:', error);
       alert('ไม่สามารถเข้าถึงไมโครโฟนได้ กรุณาตรวจสอบการตั้งค่า');
@@ -236,7 +288,12 @@ export default function AIChatPage() {
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
+    if (recognitionRef.current && isRecording) {
+      // Stop Web Speech API
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    } else if (mediaRecorderRef.current && isRecording) {
+      // Stop MediaRecorder
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
@@ -246,78 +303,95 @@ export default function AIChatPage() {
     setIsProcessing(true);
     
     try {
-      const geminiApiKey = process.env.NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY;
-      
-      if (!geminiApiKey || geminiApiKey === 'your_gemini_api_key_here') {
-        // Fallback: Simulate speech-to-text processing if no API key
-        console.warn('Gemini API key not configured, using simulation');
+      // Check if Web Speech API is available
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        // Use Web Speech API for real-time transcription
+        console.log('Using Web Speech API');
+        // Note: Web Speech API needs to be started before recording
+        // For now, fallback to audio blob processing with Gemini
+        
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const geminiApiKey = process.env.NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY;
+          
+          if (!geminiApiKey || geminiApiKey === 'your_gemini_api_key_here') {
+            // Fallback: Simulate speech-to-text processing
+            console.warn('Gemini API key not configured, using simulation');
+            setTimeout(() => {
+              const transcribedText = "นี่คือข้อความที่แปลงจากเสียง (จำลอง) กรุณาอัพเดท Gemini API Key";
+              addUserMessage(transcribedText, true, true);
+              setIsProcessing(false);
+            }, 2000);
+            return;
+          }
+
+          try {
+            const base64Audio = reader.result as string;
+            const base64Data = base64Audio.split(',')[1];
+            
+            // Call Gemini API for speech-to-text
+            const response = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  contents: [{
+                    parts: [
+                      {
+                        text: "Convert this audio to Thai text. Return only the transcribed text in Thai."
+                      },
+                      {
+                        inlineData: {
+                          mimeType: 'audio/webm',
+                          data: base64Data
+                        }
+                      }
+                    ]
+                  }]
+                })
+              }
+            );
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(errorData.error?.message || 'Failed to transcribe audio');
+            }
+
+            const data = await response.json();
+            const transcribedText = data.candidates[0].content.parts[0].text.trim();
+            
+            if (transcribedText) {
+              addUserMessage(transcribedText, true, true);
+            } else {
+              throw new Error('No transcription received');
+            }
+            setIsProcessing(false);
+          } catch (error) {
+            console.error('Error transcribing audio:', error);
+            // Fallback to simulation
+            const transcribedText = "ไม่สามารถแปลงเสียงได้ กรุณาพิมพ์ข้อความแทน";
+            addUserMessage(transcribedText, true, true);
+            setIsProcessing(false);
+          }
+        };
+        
+        reader.onerror = () => {
+          setIsProcessing(false);
+        };
+        
+        reader.readAsDataURL(audioBlob);
+      } else {
+        // Web Speech API not supported
+        console.log('Web Speech API not supported');
         setTimeout(() => {
-          const transcribedText = "นี่คือข้อความที่แปลงจากเสียง (จำลอง)";
+          const transcribedText = "เบราว์เซอร์ไม่รองรับการแปลงเสียง กรุณาใช้ Chrome หรือ Edge";
           addUserMessage(transcribedText, true, true);
           setIsProcessing(false);
         }, 2000);
-        return;
       }
-
-      // Convert audio blob to base64
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Audio = reader.result as string;
-        const base64Data = base64Audio.split(',')[1];
-        
-        try {
-          // Call Gemini API for speech-to-text
-          const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                contents: [{
-                  parts: [
-                    {
-                      text: "Convert this audio to text in Thai language. Return only the transcribed text."
-                    },
-                    {
-                      inlineData: {
-                        mimeType: 'audio/webm',
-                        data: base64Data
-                      }
-                    }
-                  ]
-                }],
-                generationConfig: {
-                  languageCode: 'th'
-                }
-              })
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error('Failed to transcribe audio');
-          }
-
-          const data = await response.json();
-          const transcribedText = data.candidates[0].content.parts[0].text;
-          
-          addUserMessage(transcribedText, true, true);
-          setIsProcessing(false);
-        } catch (error) {
-          console.error('Error transcribing audio:', error);
-          // Fallback to simulation
-          const transcribedText = "ไม่สามารถแปลงเสียงได้ กรุณาพิมพ์ข้อความแทน";
-          addUserMessage(transcribedText, true, true);
-          setIsProcessing(false);
-        }
-      };
-      
-      reader.onerror = () => {
-        setIsProcessing(false);
-      };
-      
-      reader.readAsDataURL(audioBlob);
     } catch (error) {
       console.error('Error processing audio:', error);
       setIsProcessing(false);
