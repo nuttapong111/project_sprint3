@@ -10,10 +10,6 @@ import {
   CheckCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  IdentificationIcon,
-  TruckIcon,
-  GlobeAltIcon,
-  UserIcon,
   ArrowPathIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
@@ -35,102 +31,13 @@ interface Document {
   canRenew?: boolean;
 }
 
-const mockDocuments: Document[] = [
-  {
-    id: '1',
-    type: 'id_card',
-    typeThai: 'บัตรประชาชน',
-    icon: '🆔',
-    iconColor: 'bg-purple-100 text-purple-600',
-    number: '1234567890123',
-    issueDate: '01/01/2020',
-    expiryDate: '01/01/2030',
-    status: 'valid',
-    statusText: 'ใช้งานได้',
-    statusColor: 'bg-green-100 text-green-800',
-    canRenew: true
-  },
-  {
-    id: '2',
-    type: 'driver_license',
-    typeThai: 'ใบขับขี่',
-    icon: '🚗',
-    iconColor: 'bg-red-100 text-red-600',
-    number: '1234567890',
-    issueDate: '15/06/2022',
-    expiryDate: '15/06/2027',
-    status: 'valid',
-    statusText: 'ใช้งานได้',
-    statusColor: 'bg-green-100 text-green-800',
-    canRenew: true
-  },
-  {
-    id: '3',
-    type: 'passport',
-    typeThai: 'หนังสือเดินทาง',
-    icon: '📘',
-    iconColor: 'bg-blue-100 text-blue-600',
-    number: 'A1234567',
-    issueDate: '10/03/2023',
-    expiryDate: '10/03/2033',
-    status: 'valid',
-    statusText: 'ใช้งานได้',
-    statusColor: 'bg-green-100 text-green-800',
-    canRenew: true
-  },
-  {
-    id: '4',
-    type: 'birth_certificate',
-    typeThai: 'สูติบัตร',
-    icon: '👶',
-    iconColor: 'bg-yellow-100 text-yellow-600',
-    number: 'BC123456789',
-    issueDate: '20/05/1990',
-    expiryDate: 'ไม่มีวันหมดอายุ',
-    status: 'valid',
-    statusText: 'ใช้งานได้',
-    statusColor: 'bg-green-100 text-green-800',
-    canRenew: false
-  }
-];
-
-const summaryCards = [
-  {
-    title: 'เอกสารทั้งหมด',
-    count: '4',
-    icon: DocumentTextIcon,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100'
-  },
-  {
-    title: 'ใช้งานได้',
-    count: '4',
-    icon: CheckCircleIcon,
-    color: 'text-green-600',
-    bgColor: 'bg-green-100'
-  },
-  {
-    title: 'ใกล้หมดอายุ',
-    count: '0',
-    icon: ClockIcon,
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-100'
-  },
-  {
-    title: 'หมดอายุ',
-    count: '0',
-    icon: ExclamationTriangleIcon,
-    color: 'text-red-600',
-    bgColor: 'bg-red-100'
-  }
-];
-
 export default function DigitalWalletPage() {
   const router = useRouter();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showCardPopup, setShowCardPopup] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     loadDocuments();
@@ -199,8 +106,9 @@ export default function DigitalWalletPage() {
       const expired = transformed.filter(d => d.status === 'expired').length;
       
       // Update summary cards (we'll need to make this dynamic)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading documents:', error);
+      setError(error.message || 'เกิดข้อผิดพลาดในการโหลดข้อมูล กรุณาลองใหม่อีกครั้ง');
     } finally {
       setLoading(false);
     }
@@ -297,6 +205,23 @@ export default function DigitalWalletPage() {
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
             <p className="mt-4 text-gray-600">กำลังโหลดข้อมูล...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-md mx-auto">
+              <p className="text-yellow-800 mb-4">{error}</p>
+              <p className="text-sm text-gray-600">กรุณาเข้าสู่ระบบเพื่อดูเอกสารดิจิทัลของคุณ</p>
+              <button
+                onClick={() => router.push('/login')}
+                className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              >
+                ไปที่หน้าล็อกอิน
+              </button>
+            </div>
+          </div>
+        ) : documents.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600">ยังไม่มีเอกสารดิจิทัล</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
