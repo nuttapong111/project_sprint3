@@ -149,14 +149,56 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
 
   // Add event listeners for accessibility when enabled
   useEffect(() => {
-    if (!isTextToSpeech) return;
+    if (!isTextToSpeech) {
+      // Disable text-to-speech when disabled
+      if (typeof window !== 'undefined') {
+        window.speechSynthesis.cancel();
+      }
+      return;
+    }
+
+    // Use a queue to prevent overlapping speech
+    const speechQueue: string[] = [];
+    let isSpeaking = false;
+
+    const speakNext = () => {
+      if (speechQueue.length === 0 || isSpeaking) return;
+      
+      isSpeaking = true;
+      const text = speechQueue.shift();
+      if (!text) {
+        isSpeaking = false;
+        return;
+      }
+
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'th-TH';
+        utterance.rate = 0.85;
+        utterance.volume = 1.0;
+        
+        utterance.onend = () => {
+          isSpeaking = false;
+          speakNext(); // Continue with next item in queue
+        };
+        
+        utterance.onerror = (event) => {
+          console.error('Speech error:', event);
+          isSpeaking = false;
+          speakNext();
+        };
+
+        window.speechSynthesis.speak(utterance);
+      }
+    };
 
     const handleButtonClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.matches('button, a')) {
         const text = target.textContent?.trim() || target.getAttribute('aria-label');
-        if (text) {
-          textToSpeech.announceButton(text);
+        if (text && text.length > 0 && text.length < 50) {
+          speechQueue.push(text);
+          speakNext();
         }
       }
     };
@@ -167,7 +209,8 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
                    document.querySelector(`label[for="${target.id}"]`)?.textContent ||
                    target.getAttribute('placeholder');
       if (label) {
-        textToSpeech.announceField(label);
+        speechQueue.push(label);
+        speakNext();
       }
     };
 
@@ -177,6 +220,7 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
     return () => {
       document.removeEventListener('click', handleButtonClick);
       document.removeEventListener('focusin', handleInputFocus);
+      window.speechSynthesis.cancel();
     };
   }, [isTextToSpeech]);
 
