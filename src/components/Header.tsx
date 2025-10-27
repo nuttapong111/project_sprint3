@@ -302,23 +302,49 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
             {/* Accessibility Features */}
             <div className="flex items-center space-x-1 mr-4">
               <button
-                onClick={() => {
+                onClick={async () => {
                   const newState = !isTextToSpeech;
                   setIsTextToSpeech(newState);
                   
-                  // Test speech synthesis
-                  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                    const testUtterance = new SpeechSynthesisUtterance(
-                      newState ? 'เปิดใช้งานการอ่านเสียง' : 'ปิดการอ่านเสียง'
-                    );
-                    testUtterance.lang = 'th-TH';
-                    testUtterance.rate = 0.9;
-                    window.speechSynthesis.speak(testUtterance);
-                    console.log('Speaking:', testUtterance.text);
-                  } else {
-                    console.error('Speech synthesis not supported');
+                  // Check browser support
+                  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
                     alert('เบราว์เซอร์ของคุณไม่รองรับการอ่านเสียง กรุณาใช้ Chrome, Edge หรือ Safari');
+                    return;
                   }
+
+                  // Stop any current speech
+                  window.speechSynthesis.cancel();
+                  
+                  // Wait a bit for cancel to complete
+                  await new Promise(resolve => setTimeout(resolve, 100));
+                  
+                  // Speak the message
+                  const testUtterance = new SpeechSynthesisUtterance(
+                    newState ? 'เปิดใช้งานการอ่านเสียง คุณสามารถคลิกปุ่มเพื่ออ่านเนื้อหาได้' : 'ปิดการอ่านเสียง'
+                  );
+                  testUtterance.lang = 'th-TH';
+                  testUtterance.rate = 0.85;
+                  testUtterance.pitch = 1.0;
+                  testUtterance.volume = 1.0;
+                  
+                  testUtterance.onstart = () => {
+                    console.log('✅ Speech started successfully');
+                  };
+                  
+                  testUtterance.onerror = (event) => {
+                    console.error('❌ Speech error:', event);
+                    alert('ไม่สามารถอ่านเสียงได้ กรุณาตรวจสอบการตั้งค่าเสียงของคุณ');
+                  };
+                  
+                  testUtterance.onend = () => {
+                    console.log('✅ Speech ended');
+                  };
+                  
+                  window.speechSynthesis.speak(testUtterance);
+                  console.log('🎤 Speaking:', testUtterance.text);
+                  
+                  // Also update the state
+                  setIsTextToSpeech(newState);
                 }}
                 className={`p-2 rounded-lg text-sm transition-colors ${
                   isTextToSpeech 
