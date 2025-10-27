@@ -45,31 +45,37 @@ class TextToSpeech {
 
     try {
       // Stop any current speech
-      this.stop();
+      if (this.currentUtterance) {
+        this.synthesis.cancel();
+      }
 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'th-TH'; // Thai language
       utterance.rate = options?.rate || 0.9;
       utterance.pitch = options?.pitch || 1.0;
-      utterance.volume = options?.volume || 1.0;
+      utterance.volume = options?.volume || 0.8;
 
       utterance.onend = () => {
         this.currentUtterance = null;
-        console.log('Speech ended:', text);
+        console.log('✅ Speech ended:', text);
       };
 
-      utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event);
+      utterance.onerror = (event: any) => {
+        console.error('❌ Speech synthesis error:', event.error, text);
         this.currentUtterance = null;
       };
 
       utterance.onstart = () => {
-        console.log('Speech started:', text);
+        console.log('🎤 Speech started:', text);
       };
 
       this.currentUtterance = utterance;
-      this.synthesis.speak(utterance);
-      console.log('Speaking:', text);
+      
+      // Small delay to ensure previous speech is canceled
+      setTimeout(() => {
+        this.synthesis.speak(utterance);
+        console.log('🎙️ Speaking:', text);
+      }, 50);
     } catch (error) {
       console.error('Error in speak():', error);
     }
