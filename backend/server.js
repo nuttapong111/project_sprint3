@@ -48,6 +48,18 @@ app.use('/api/documents', require('./routes/documents'));
 app.use('/api/digital-documents', require('./routes/digitalDocuments'));
 app.use('/api/notifications', require('./routes/notifications'));
 
+// Error handling middleware (after routes but before startServer)
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
+
+// 404 handler (after routes but before startServer)
+app.use((req, res) => {
+  console.log('Route not found:', req.method, req.path);
+  res.status(404).json({ error: 'Route not found' });
+});
+
 // Initialize database
 async function initializeDatabase() {
   try {
@@ -242,17 +254,6 @@ async function insertSampleData() {
   }
 }
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
-});
-
 // Start server
 async function startServer() {
   try {
@@ -262,6 +263,7 @@ async function startServer() {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📡 API endpoints available at http://localhost:${PORT}/api`);
       console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+      console.log(`📄 Digital docs: http://localhost:${PORT}/api/digital-documents`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
