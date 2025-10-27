@@ -373,7 +373,6 @@ export default function DigitalWalletPage() {
           </motion.div>
         </div>
       )}
-    </div>
   </main>
 </div>
   );
