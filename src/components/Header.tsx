@@ -120,6 +120,7 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
   // Accessibility features
   useEffect(() => {
     textToSpeech.setEnabled(isTextToSpeech);
+    console.log('Text-to-speech enabled:', isTextToSpeech);
   }, [isTextToSpeech]);
 
   // Announce page changes when text-to-speech is enabled
@@ -304,11 +305,19 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
                 onClick={() => {
                   const newState = !isTextToSpeech;
                   setIsTextToSpeech(newState);
-                  if (newState) {
-                    textToSpeech.speak('เปิดใช้งานการอ่านเสียง');
+                  
+                  // Test speech synthesis
+                  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                    const testUtterance = new SpeechSynthesisUtterance(
+                      newState ? 'เปิดใช้งานการอ่านเสียง' : 'ปิดการอ่านเสียง'
+                    );
+                    testUtterance.lang = 'th-TH';
+                    testUtterance.rate = 0.9;
+                    window.speechSynthesis.speak(testUtterance);
+                    console.log('Speaking:', testUtterance.text);
                   } else {
-                    textToSpeech.stop();
-                    textToSpeech.speak('ปิดการอ่านเสียง');
+                    console.error('Speech synthesis not supported');
+                    alert('เบราว์เซอร์ของคุณไม่รองรับการอ่านเสียง กรุณาใช้ Chrome, Edge หรือ Safari');
                   }
                 }}
                 className={`p-2 rounded-lg text-sm transition-colors ${
@@ -317,11 +326,6 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                 }`}
                 aria-label={isTextToSpeech ? 'ปิดการอ่านเสียง' : 'เปิดการอ่านเสียง'}
-                onMouseEnter={() => {
-                  if (isTextToSpeech) {
-                    textToSpeech.announceButton(isTextToSpeech ? 'ปิดการอ่านเสียง' : 'เปิดการอ่านเสียง');
-                  }
-                }}
               >
                 {isTextToSpeech ? (
                   <SpeakerXMarkIcon className="h-4 w-4" />
