@@ -245,12 +245,83 @@ export default function AIChatPage() {
   const processAudio = async (audioBlob: Blob) => {
     setIsProcessing(true);
     
-    // Simulate speech-to-text processing
-    setTimeout(() => {
-      const transcribedText = "นี่คือข้อความที่แปลงจากเสียง (จำลอง)";
-      addUserMessage(transcribedText, true, true);
+    try {
+      const geminiApiKey = process.env.NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY;
+      
+      if (!geminiApiKey || geminiApiKey === 'your_gemini_api_key_here') {
+        // Fallback: Simulate speech-to-text processing if no API key
+        console.warn('Gemini API key not configured, using simulation');
+        setTimeout(() => {
+          const transcribedText = "นี่คือข้อความที่แปลงจากเสียง (จำลอง)";
+          addUserMessage(transcribedText, true, true);
+          setIsProcessing(false);
+        }, 2000);
+        return;
+      }
+
+      // Convert audio blob to base64
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Audio = reader.result as string;
+        const base64Data = base64Audio.split(',')[1];
+        
+        try {
+          // Call Gemini API for speech-to-text
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                contents: [{
+                  parts: [
+                    {
+                      text: "Convert this audio to text in Thai language. Return only the transcribed text."
+                    },
+                    {
+                      inlineData: {
+                        mimeType: 'audio/webm',
+                        data: base64Data
+                      }
+                    }
+                  ]
+                }],
+                generationConfig: {
+                  languageCode: 'th'
+                }
+              })
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error('Failed to transcribe audio');
+          }
+
+          const data = await response.json();
+          const transcribedText = data.candidates[0].content.parts[0].text;
+          
+          addUserMessage(transcribedText, true, true);
+          setIsProcessing(false);
+        } catch (error) {
+          console.error('Error transcribing audio:', error);
+          // Fallback to simulation
+          const transcribedText = "ไม่สามารถแปลงเสียงได้ กรุณาพิมพ์ข้อความแทน";
+          addUserMessage(transcribedText, true, true);
+          setIsProcessing(false);
+        }
+      };
+      
+      reader.onerror = () => {
+        setIsProcessing(false);
+      };
+      
+      reader.readAsDataURL(audioBlob);
+    } catch (error) {
+      console.error('Error processing audio:', error);
       setIsProcessing(false);
-    }, 2000);
+    }
   };
 
   const addUserMessage = (content: string, isVoice: boolean = false, isTranscribed: boolean = false) => {
