@@ -1,11 +1,22 @@
-import { User } from './mockUsers';
+// Interface for logged in user from API
+export interface ApiUser {
+  id: number;
+  username: string;
+  email: string;
+  fullName: string;
+  role: string;
+  status: string;
+  phone?: string;
+  address?: string;
+  idCard?: string;
+}
 
 // Context สำหรับจัดการข้อมูลผู้ใช้ปัจจุบัน
 export class UserContext {
-  private static currentUser: User | null = null;
+  private static currentUser: ApiUser | null = null;
 
   // ตั้งค่าผู้ใช้ปัจจุบัน
-  public static setCurrentUser(user: User): void {
+  public static setCurrentUser(user: ApiUser): void {
     this.currentUser = user;
     // เก็บข้อมูลใน localStorage เพื่อให้คงอยู่ระหว่างการรีเฟรช
     if (typeof window !== 'undefined') {
@@ -14,7 +25,7 @@ export class UserContext {
   }
 
   // ดึงข้อมูลผู้ใช้ปัจจุบัน
-  public static getCurrentUser(): User | null {
+  public static getCurrentUser(): ApiUser | null {
     if (this.currentUser) {
       return this.currentUser;
     }
@@ -41,6 +52,7 @@ export class UserContext {
     this.currentUser = null;
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
+      localStorage.removeItem('auth_token');
     }
   }
 
@@ -63,11 +75,11 @@ export class UserContext {
     }
 
     return {
-      name: `${user.firstName} ${user.lastName}`,
-      idCard: user.thaiId,
-      address: 'ที่อยู่ (กรุณาอัปเดตในโปรไฟล์)', // ข้อมูลนี้ไม่มีใน mock data
-      phone: user.phone,
-      email: user.email
+      name: user.fullName || 'ไม่ระบุชื่อ',
+      idCard: user.idCard || 'ไม่ระบุ',
+      address: user.address || 'ไม่ระบุ',
+      phone: user.phone || 'ไม่ระบุ',
+      email: user.email || 'ไม่ระบุ'
     };
   }
 }

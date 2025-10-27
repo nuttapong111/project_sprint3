@@ -15,7 +15,7 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import Header from '@/components/Header';
-import { UserManagement, UserRole } from '@/lib/userManagement';
+import apiService from '@/lib/api';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -145,40 +145,37 @@ export default function RegisterPage() {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Create user account
-      const user = UserManagement.createUser(
-        formData.username,
-        formData.email,
-        formData.fullName,
-        'citizen' as UserRole,
-        formData.phone,
-        formData.address,
-        formData.idCard
-      );
+      // Call API to register user
+      await apiService.register({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        fullName: formData.fullName,
+        phone: formData.phone,
+        address: formData.address,
+        idCard: formData.idCard,
+        birthDate: formData.birthDate,
+        gender: formData.gender
+      });
 
-      if (user) {
-        setSuccess(true);
-        // Reset form
-        setFormData({
-          username: '',
-          email: '',
-          password: '',
-          confirmPassword: '',
-          fullName: '',
-          phone: '',
-          address: '',
-          idCard: '',
-          birthDate: '',
-          gender: '',
-          agreeToTerms: false
-        });
-      }
-    } catch (error) {
+      setSuccess(true);
+      // Reset form
+      setFormData({
+        username: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        fullName: '',
+        phone: '',
+        address: '',
+        idCard: '',
+        birthDate: '',
+        gender: '',
+        agreeToTerms: false
+      });
+    } catch (error: any) {
       console.error('Registration error:', error);
-      setErrors({ submit: 'เกิดข้อผิดพลาดในการสมัครสมาชิก กรุณาลองใหม่อีกครั้ง' });
+      setErrors({ submit: error.message || 'เกิดข้อผิดพลาดในการสมัครสมาชิก กรุณาลองใหม่อีกครั้ง' });
     } finally {
       setIsSubmitting(false);
     }

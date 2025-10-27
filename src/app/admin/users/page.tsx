@@ -22,7 +22,28 @@ import {
   BriefcaseIcon
 } from '@heroicons/react/24/outline';
 import Header from '@/components/Header';
-import { UserManagement, User, UserRole, UserStatus } from '@/lib/userManagement';
+import apiService from '@/lib/api';
+
+// Types
+type UserRole = 'citizen' | 'officer' | 'admin';
+type UserStatus = 'active' | 'inactive' | 'suspended' | 'pending';
+
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  full_name: string;
+  role: UserRole;
+  status: UserStatus;
+  phone?: string;
+  address?: string;
+  id_card?: string;
+  department?: string;
+  position?: string;
+  notes?: string;
+  created_at: string;
+  last_login_at?: string;
+}
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -47,68 +68,103 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     loadUsers();
-  }, []);
+  }, [filterRole, filterStatus, searchTerm]);
 
-  const loadUsers = () => {
-    const allUsers = UserManagement.getAllUsers();
-    setUsers(allUsers);
+  const loadUsers = async () => {
+    try {
+      const allUsers = await apiService.getUsers({ role: filterRole, status: filterStatus, search: searchTerm });
+      setUsers(allUsers);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
   };
 
   const getStatusColor = (status: UserStatus) => {
-    return UserManagement.getStatusColor(status);
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800';
+      case 'suspended':
+        return 'bg-red-100 text-red-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
 
   const getStatusText = (status: UserStatus) => {
-    return UserManagement.getStatusText(status);
+    switch (status) {
+      case 'active':
+        return 'ใช้งานได้';
+      case 'inactive':
+        return 'ไม่ใช้งาน';
+      case 'suspended':
+        return 'ระงับการใช้งาน';
+      case 'pending':
+        return 'รอการอนุมัติ';
+      default:
+        return 'ไม่ทราบสถานะ';
+    }
   };
 
   const getRoleColor = (role: UserRole) => {
-    return UserManagement.getRoleColor(role);
+    switch (role) {
+      case 'citizen':
+        return 'bg-blue-100 text-blue-800';
+      case 'officer':
+        return 'bg-green-100 text-green-800';
+      case 'admin':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
 
   const getRoleText = (role: UserRole) => {
-    return UserManagement.getRoleText(role);
+    switch (role) {
+      case 'citizen':
+        return 'ประชาชน';
+      case 'officer':
+        return 'เจ้าหน้าที่';
+      case 'admin':
+        return 'ผู้ดูแลระบบ';
+      default:
+        return 'ไม่ทราบบทบาท';
+    }
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesRole = filterRole === 'all' || user.role === filterRole;
-    const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
-    const matchesSearch = searchTerm === '' || 
-      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.idCard?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesRole && matchesStatus && matchesSearch;
-  });
+  // API already filters the data, so we can use users directly
+  const filteredUsers = users;
 
   const handleViewUser = (user: User) => {
     setSelectedUser(user);
     setShowModal(true);
   };
 
-  const handleAddUser = () => {
+  const handleAddUser = async () => {
     if (!newUser.username || !newUser.email || !newUser.fullName) {
       alert('กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
     }
 
-    const user = UserManagement.createUser(
-      newUser.username,
-      newUser.email,
-      newUser.fullName,
-      newUser.role,
-      newUser.phone || undefined,
-      newUser.address || undefined,
-      newUser.idCard || undefined,
-      newUser.department || undefined,
-      newUser.position || undefined,
-      newUser.notes || undefined
-    );
+    try {
+      await apiService.createUser({
+        username: newUser.username,
+        email: newUser.email,
+        password: 'password123', // Default password for admin-created users
+        fullName: newUser.fullName,
+        role: newUser.role,
+        phone: newUser.phone || undefined,
+        address: newUser.address || undefined,
+        idCard: newUser.idCard || undefined,
+        department: newUser.department || undefined,
+        position: newUser.position || undefined,
+        notes: newUser.notes || undefined
+      });
 
-    if (user) {
-      loadUsers();
+      await loadUsers();
       setShowAddModal(false);
       setNewUser({
         username: '',
@@ -123,36 +179,69 @@ export default function AdminUsersPage() {
         notes: ''
       });
       alert('เพิ่มผู้ใช้เรียบร้อยแล้ว!');
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      alert(error.message || 'เกิดข้อผิดพลาดในการเพิ่มผู้ใช้');
     }
   };
 
-  const handleStatusChange = (userId: string, newStatus: UserStatus) => {
-    const success = UserManagement.changeUserStatus(userId, newStatus);
-    if (success) {
-      loadUsers();
+  const handleStatusChange = async (userId: number, newStatus: UserStatus) => {
+    try {
+      await apiService.updateUserStatus(userId, newStatus);
+      await loadUsers();
       alert(`เปลี่ยนสถานะเป็น "${getStatusText(newStatus)}" เรียบร้อยแล้ว`);
+    } catch (error: any) {
+      console.error('Error updating user status:', error);
+      alert(error.message || 'เกิดข้อผิดพลาดในการเปลี่ยนสถานะ');
     }
   };
 
-  const handleRoleChange = (userId: string, newRole: UserRole) => {
-    const success = UserManagement.changeUserRole(userId, newRole);
-    if (success) {
-      loadUsers();
+  const handleRoleChange = async (userId: number, newRole: UserRole) => {
+    try {
+      await apiService.updateUserRole(userId, newRole);
+      await loadUsers();
       alert(`เปลี่ยนบทบาทเป็น "${getRoleText(newRole)}" เรียบร้อยแล้ว`);
+    } catch (error: any) {
+      console.error('Error updating user role:', error);
+      alert(error.message || 'เกิดข้อผิดพลาดในการเปลี่ยนบทบาท');
     }
   };
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: number) => {
     if (confirm('คุณแน่ใจหรือไม่ที่จะลบผู้ใช้นี้?')) {
-      const success = UserManagement.deleteUser(userId);
-      if (success) {
-        loadUsers();
+      try {
+        await apiService.deleteUser(userId);
+        await loadUsers();
         alert('ลบผู้ใช้เรียบร้อยแล้ว!');
+      } catch (error: any) {
+        console.error('Error deleting user:', error);
+        alert(error.message || 'เกิดข้อผิดพลาดในการลบผู้ใช้');
       }
     }
   };
 
-  const stats = UserManagement.getUserStats();
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    pending: 0,
+    suspended: 0,
+    citizens: 0,
+    officers: 0,
+    admins: 0
+  });
+
+  const loadStats = async () => {
+    try {
+      const userStats = await apiService.getUserStats();
+      setStats(userStats);
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadStats();
+  }, []);
 
   const userRoles: { value: UserRole; label: string }[] = [
     { value: 'citizen', label: 'ประชาชน' },

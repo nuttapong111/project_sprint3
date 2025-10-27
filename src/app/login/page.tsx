@@ -14,14 +14,15 @@ import {
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { findUserByThaiId, findUserByCredentials } from '@/lib/mockUsers';
+import Swal from 'sweetalert2';
+import apiService from '@/lib/api';
+import { UserContext } from '@/lib/userContext';
 
 export default function LoginPage() {
   const router = useRouter();
   const [loginMethod, setLoginMethod] = useState<'thaiid' | 'email' | 'phone'>('thaiid');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     thaiId: '',
     email: '',
@@ -40,41 +41,72 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
 
     try {
       if (loginMethod === 'thaiid') {
         // Thai ID login - redirect to QR code page
-        const user = findUserByThaiId(formData.thaiId);
-        if (user) {
-          router.push(`/login/qr?thaiId=${formData.thaiId}`);
-        } else {
-          setError('ไม่พบหมายเลขบัตรประชาชนในระบบ');
-        }
+        // TODO: Add API endpoint for Thai ID login
+        router.push(`/login/qr?thaiId=${formData.thaiId}`);
       } else {
-        // Email/Phone login with password
-        const user = findUserByCredentials(
-          loginMethod === 'email' ? formData.email : formData.phone,
-          formData.password
-        );
-               if (user) {
-                 console.log('Login successful:', user);
-                 // Redirect to appropriate dashboard based on user type
-                 if (user.userType === 'citizen') {
-                   router.push('/citizen/dashboard');
-                 } else if (user.userType === 'officer') {
-                   router.push('/officer/dashboard');
-                 } else if (user.userType === 'admin') {
-                   router.push('/admin/dashboard');
-                 } else {
-                   router.push('/');
-                 }
-               } else {
-          setError('อีเมล/เบอร์โทรศัพท์หรือรหัสผ่านไม่ถูกต้อง');
+        // Email/Phone login with password using API
+        const username = loginMethod === 'email' ? formData.email : formData.phone;
+        const response = await apiService.login(username, formData.password);
+        
+        if (response && response.user) {
+          // Show success alert
+          await Swal.fire({
+            icon: 'success',
+            title: 'เข้าสู่ระบบสำเร็จ!',
+            text: `ยินดีต้อนรับ ${response.user.fullName}`,
+            showConfirmButton: false,
+            timer: 1500
+          });
+
+          // Store user in context
+          UserContext.setCurrentUser(response.user);
+          
+          // Redirect to appropriate dashboard based on user role
+          if (response.user.role === 'citizen') {
+            router.push('/citizen/dashboard');
+          } else if (response.user.role === 'officer') {
+            router.push('/officer/dashboard');
+          } else if (response.user.role === 'admin') {
+            router.push('/admin/dashboard');
+          } else {
+            router.push('/');
+          }
+        } else {
+          // Show error for invalid credentials
+          await Swal.fire({
+            icon: 'error',
+            title: 'เข้าสู่ระบบล้มเหลว',
+            text: 'อีเมล/เบอร์โทรศัพท์หรือรหัสผ่านไม่ถูกต้อง',
+            confirmButtonText: 'ลองอีกครั้ง',
+            confirmButtonColor: '#2563eb'
+          });
         }
       }
-    } catch (err) {
-      setError('เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      
+      // Determine error message
+      let errorMessage = 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ';
+      if (err.message && err.message.includes('Invalid credentials')) {
+        errorMessage = 'อีเมล/เบอร์โทรศัพท์หรือรหัสผ่านไม่ถูกต้อง';
+      } else if (err.message && err.message.includes('Network error')) {
+        errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      // Show error alert
+      await Swal.fire({
+        icon: 'error',
+        title: 'เข้าสู่ระบบล้มเหลว',
+        text: errorMessage,
+        confirmButtonText: 'ลองอีกครั้ง',
+        confirmButtonColor: '#2563eb'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -166,16 +198,6 @@ export default function LoginPage() {
                   ))}
                 </div>
               </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex items-center">
-                    <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-2" />
-                    <p className="text-sm text-red-700">{error}</p>
-                  </div>
-                </div>
-              )}
 
               {/* Form Fields */}
               <div className="space-y-4">

@@ -18,9 +18,7 @@ import {
   BuildingOfficeIcon
 } from '@heroicons/react/24/outline';
 import Header from '@/components/Header';
-import { DocumentSubmissionManager } from '@/lib/documentSubmission';
-import { ReportStatusManager } from '@/lib/reportStatus';
-import { UserManagement } from '@/lib/userManagement';
+import apiService from '@/lib/api';
 import Link from 'next/link';
 
 interface DashboardStats {
@@ -54,23 +52,29 @@ export default function AdminDashboardPage() {
     loadStats();
   }, []);
 
-  const loadStats = () => {
-    const allReports = ReportStatusManager.getAllReports();
-    const allSubmissions = DocumentSubmissionManager.getAllSubmissions();
-    const userStats = UserManagement.getUserStats();
-    
-    setStats({
-      totalUsers: userStats.total,
-      totalReports: allReports.length,
-      totalSubmissions: allSubmissions.length,
-      totalAppointments: 89, // Mock data
-      pendingReports: allReports.filter(r => r.status === 'pending').length,
-      pendingSubmissions: allSubmissions.filter(s => s.status === 'pending').length,
-      approvedReports: allReports.filter(r => r.status === 'approved').length,
-      approvedSubmissions: allSubmissions.filter(s => s.status === 'approved').length,
-      rejectedReports: allReports.filter(r => r.status === 'rejected').length,
-      rejectedSubmissions: allSubmissions.filter(s => s.status === 'rejected').length
-    });
+  const loadStats = async () => {
+    try {
+      const [userStats, reportStats, documentStats] = await Promise.all([
+        apiService.getUserStats(),
+        apiService.getReportStats(),
+        apiService.getDocumentSubmissionStats()
+      ]);
+      
+      setStats({
+        totalUsers: userStats.total,
+        totalReports: reportStats.total,
+        totalSubmissions: documentStats.total,
+        totalAppointments: 89, // Mock data
+        pendingReports: reportStats.pending,
+        pendingSubmissions: documentStats.pending,
+        approvedReports: reportStats.approved,
+        approvedSubmissions: documentStats.approved,
+        rejectedReports: reportStats.rejected,
+        rejectedSubmissions: documentStats.rejected
+      });
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
   };
 
   const statCards = [
