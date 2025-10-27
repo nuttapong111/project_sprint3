@@ -22,6 +22,7 @@ import {
 import NotificationPopup from './NotificationPopup';
 import { UserContext } from '@/lib/userContext';
 import { mockUsers } from '@/lib/mockUsers';
+import textToSpeech from '@/lib/textToSpeech';
 
 interface HeaderProps {
   isLoggedIn?: boolean;
@@ -118,19 +119,64 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
 
   // Accessibility features
   useEffect(() => {
-    if (isTextToSpeech) {
-      const speak = (text: string) => {
-        if ('speechSynthesis' in window) {
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = 'th-TH';
-          utterance.rate = 0.8;
-          speechSynthesis.speak(utterance);
-        }
-      };
-      speak('ยินดีต้อนรับสู่แพลตฟอร์มดิจิทัลภาครัฐ');
-    } else {
-      speechSynthesis.cancel();
+    textToSpeech.setEnabled(isTextToSpeech);
+  }, [isTextToSpeech]);
+
+  // Announce page changes when text-to-speech is enabled
+  useEffect(() => {
+    if (isTextToSpeech && typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      let pageTitle = '';
+      
+      if (path.includes('dashboard')) {
+        pageTitle = 'แดชบอร์ด';
+      } else if (path.includes('digital-wallet')) {
+        pageTitle = 'กระเป๋าเอกสารดิจิทัล';
+      } else if (path.includes('report-crime')) {
+        pageTitle = 'บันทึกประจำวัน';
+      } else if (path.includes('document-history')) {
+        pageTitle = 'ประวัติเอกสาร';
+      } else if (path.includes('profile')) {
+        pageTitle = 'ข้อมูลส่วนตัว';
+      } else {
+        pageTitle = 'แพลตฟอร์มดิจิทัลภาครัฐ';
+      }
+
+      textToSpeech.announcePageContent(pageTitle);
     }
+  }, [isTextToSpeech]);
+
+  // Add event listeners for accessibility when enabled
+  useEffect(() => {
+    if (!isTextToSpeech) return;
+
+    const handleButtonClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.matches('button, a')) {
+        const text = target.textContent?.trim() || target.getAttribute('aria-label');
+        if (text) {
+          textToSpeech.announceButton(text);
+        }
+      }
+    };
+
+    const handleInputFocus = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      const label = target.getAttribute('aria-label') || 
+                   document.querySelector(`label[for="${target.id}"]`)?.textContent ||
+                   target.getAttribute('placeholder');
+      if (label) {
+        textToSpeech.announceField(label);
+      }
+    };
+
+    document.addEventListener('click', handleButtonClick);
+    document.addEventListener('focusin', handleInputFocus);
+
+    return () => {
+      document.removeEventListener('click', handleButtonClick);
+      document.removeEventListener('focusin', handleInputFocus);
+    };
   }, [isTextToSpeech]);
 
   useEffect(() => {
@@ -255,13 +301,27 @@ export default function Header({ isLoggedIn = false, userType = 'citizen' }: Hea
             {/* Accessibility Features */}
             <div className="flex items-center space-x-1 mr-4">
               <button
-                onClick={() => setIsTextToSpeech(!isTextToSpeech)}
+                onClick={() => {
+                  const newState = !isTextToSpeech;
+                  setIsTextToSpeech(newState);
+                  if (newState) {
+                    textToSpeech.speak('เปิดใช้งานการอ่านเสียง');
+                  } else {
+                    textToSpeech.stop();
+                    textToSpeech.speak('ปิดการอ่านเสียง');
+                  }
+                }}
                 className={`p-2 rounded-lg text-sm transition-colors ${
                   isTextToSpeech 
                     ? 'bg-primary-100 text-primary-600' 
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                 }`}
                 aria-label={isTextToSpeech ? 'ปิดการอ่านเสียง' : 'เปิดการอ่านเสียง'}
+                onMouseEnter={() => {
+                  if (isTextToSpeech) {
+                    textToSpeech.announceButton(isTextToSpeech ? 'ปิดการอ่านเสียง' : 'เปิดการอ่านเสียง');
+                  }
+                }}
               >
                 {isTextToSpeech ? (
                   <SpeakerXMarkIcon className="h-4 w-4" />
