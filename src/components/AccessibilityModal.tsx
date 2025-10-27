@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { XMarkIcon, EyeIcon, SpeakerWaveIcon, CursorArrowRaysIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
+import textToSpeech from '@/lib/textToSpeech';
 
 interface AccessibilityModalProps {
   isOpen: boolean;
@@ -16,6 +17,25 @@ export default function AccessibilityModal({ isOpen, onClose }: AccessibilityMod
     textToSpeech: false,
     voiceControl: false
   });
+
+  // Load preferences from localStorage
+  useEffect(() => {
+    const savedPrefs = localStorage.getItem('accessibilityPreferences');
+    if (savedPrefs) {
+      const prefs = JSON.parse(savedPrefs);
+      setPreferences(prefs);
+      // Apply existing preferences
+      if (prefs.highContrast) {
+        document.documentElement.classList.add('high-contrast');
+      }
+      if (prefs.largeText) {
+        document.documentElement.classList.add('large-text');
+      }
+      if (prefs.textToSpeech) {
+        textToSpeech.setEnabled(true);
+      }
+    }
+  }, []);
 
   const handleToggle = (key: keyof typeof preferences) => {
     setPreferences(prev => ({
@@ -36,6 +56,14 @@ export default function AccessibilityModal({ isOpen, onClose }: AccessibilityMod
       document.documentElement.classList.add('large-text');
     } else {
       document.documentElement.classList.remove('large-text');
+    }
+
+    // Apply text-to-speech
+    if (preferences.textToSpeech) {
+      textToSpeech.setEnabled(true);
+      textToSpeech.speak('การตั้งค่าการเข้าถึงได้ถูกเปิดใช้งานแล้ว');
+    } else {
+      textToSpeech.setEnabled(false);
     }
 
     // Save preferences
